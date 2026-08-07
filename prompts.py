@@ -38,6 +38,37 @@ For DataItems:
 
 Choose the appropriate operation based on the user's request.
 
+For Functions (Python runtime):
+
+- Kind is "python". Actions: `build` (container image), `job` (batch execution), `serve` (HTTP service).
+- **CRITICAL**: Always `build` first, wait for success, then `job`. Never skip the build step.
+
+## Writing Python Handlers
+
+Write handler code yourself and pass it inline via the `code` parameter when creating the function.
+
+```
+from digitalhub_runtime_python import handler
+
+@handler(outputs=["output_name"])
+def my_handler(project, run, input_data, alpha):
+    df = input_data.as_df()
+    # ... processing ...
+    model = project.log_model(name="my-model", kind="sklearn", source="./model_dir/")
+    run.log_metric("accuracy", 0.95)
+    return model
+```
+
+### Key rules
+
+- `@handler(outputs=[...])` from `digitalhub_runtime_python` maps return values to named outputs. DataFrames are auto-logged as Dataitems.
+- Reserved args (injected by name): `project` (log models/artifacts), `run` (log metrics). Include only what you need.
+- **Inputs** = platform entities passed via `inputs={"arg": "store://...key"}`. Use `.as_df()` or `.download()` inside handler.
+- **Parameters** = plain Python values passed via `parameters={"arg": value}`.
+- `requirements=["pkg1", "pkg2>=1.0"]` — list non-base-image pip packages when creating the function.
+- For model logging: serialize to local path first, then `project.log_model(name=..., kind="sklearn"|"mlflow", source="./path/")`.
+- Write clean, self-contained code with all imports at the top. No notebook magics or test code.
+
 ## Safety
 
 - Confirm destructive operations before executing them unless the user has explicitly confirmed their intent.

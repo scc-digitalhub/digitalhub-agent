@@ -8,9 +8,13 @@ from prompts import SYSTEM_PROMPT
 
 
 def _on_tool_error(exc: Exception, request: ToolCallRequest) -> str:
-    """Return the raw SDK exception message to the model so it can self-correct."""
+    """Return the raw SDK exception message with OKF troubleshooting guidance to the model for self-correction."""
     tool_name = request.tool_call["name"]
-    return f"SDK Exception in tool '{tool_name}': {exc}"
+    return (
+        f"SDK Exception in tool '{tool_name}': {exc}\n"
+        f"Self-Correction Tip: Use `get_knowledge_doc('troubleshooting')` or "
+        f"`search_knowledge('{type(exc).__name__}')` to diagnose parameter or configuration errors."
+    )
 
 
 def get_dh_agent(tools=None, model_name=None, base_url=None, api_key=None, system_prompt=None):

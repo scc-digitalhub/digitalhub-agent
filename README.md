@@ -45,23 +45,36 @@ The `.env.example` uses a personal access token (`DHCORE_PERSONAL_ACCESS_TOKEN`)
 
 The SDK automatically selects the appropriate auth flow based on available credentials. For full details on all methods and configuration options, see the [DHCore credentials documentation](https://scc-digitalhub.github.io/sdk-docs/reference/configuration/credentials/dhcore/).
 
-## Development
+## Architecture & Open Knowledge Format (OKF)
 
-The Agent code is written in Python and structured as follows:
+The Agent employs the **Open Knowledge Format (OKF)** to maintain modular, versioned technical documentation and SDK reference specifications outside of the static system prompt. This drastically reduces prompt token size, avoids context degradation, and allows the agent to dynamically look up SDK parameters and conventions on demand.
 
 ```
-├── agent.py            # Agent factory (LLM + tools + middleware)
-├── graph.py            # LangGraph entry point
-├── main.py             # CLI runner
-├── prompts.py          # System prompt
-├── settings.py         # Environment variable loading
+├── agent.py               # Agent factory (LLM + tools + middleware)
+├── graph.py               # LangGraph entry point
+├── main.py                # CLI runner
+├── prompts.py             # Lean behavioral system prompt
+├── settings.py            # Environment variable loading
+├── knowledge/             # OKF Knowledge Base (YAML Frontmatter + Markdown)
+│   ├── index.md           # Master catalog & routing
+│   ├── entities/
+│   │   ├── project.md     # Project entity & SDK specifications
+│   │   └── dataitem.md    # DataItem entity & storage guide
+│   ├── runtimes/
+│   │   └── python_function.md # Python runtime, @handler guide, build & runs
+│   └── workflows/
+│       └── recipes.md     # End-to-end multi-step workflow recipes
 ├── tools/
-│   ├── project_tools.py    # DigitalHub project management tools
-│   └── dataitem_tools.py   # DigitalHub dataitem management tools
-├── langgraph.json      # LangGraph configuration
-├── requirements.txt    # Python dependencies
-└── .env.example        # Environment variable template
+│   ├── knowledge_tools.py # OKF tools (list_knowledge_topics, get_knowledge_doc, search_knowledge)
+│   ├── project_tools.py   # DigitalHub project management tools
+│   ├── dataitem_tools.py  # DigitalHub dataitem management tools
+│   └── function_tools.py  # DigitalHub function (python runtime) tools
+├── langgraph.json         # LangGraph configuration
+├── requirements.txt       # Python dependencies
+└── .env.example           # Environment variable template
 ```
+
+## Development
 
 ### Build from source
 

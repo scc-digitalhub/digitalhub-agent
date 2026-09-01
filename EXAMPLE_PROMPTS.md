@@ -51,3 +51,21 @@ In project 'my-agentic-testing':
 4. Unshare the project from user 'msaloni@fbk.eu'.
 5. Delete the project 'my-agentic-testing'.
 ```
+
+---
+
+### Step 6: Scikit-Learn ML Workflow (`mlsklearn`) - Natural Language
+
+```text
+I want to train a machine learning model on iris dataset data. 
+Please create a project called 'iris-ml-project', register the dataset from 'https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv', write a python function that trains a Scikit-Learn RandomForest classifier on it, build the function, and run the job to log the metrics and final model.
+```
+
+---
+
+### Step 7: MLflow ML Workflow (`mlmlflow`) - Natural Language
+
+```text
+I want to build an MLflow tracking pipeline for wine quality prediction.
+Create a project called 'wine-mlflow-project', load dataset from 'https://raw.githubusercontent.com/mlflow/mlflow-example/master/wine-quality.csv', write a python function to train an ElasticNet regression model with alpha=0.5 and l1_ratio=0.5 using MLflow tracking, build the function, and run the job to record the model and performance metrics.
+```

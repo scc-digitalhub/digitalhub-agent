@@ -14,14 +14,62 @@ topics:
     type: "entity_specification"
     title: "DigitalHub DataItem Entity & Storage Guide"
     path: "entities/dataitem.md"
-    tags: [dataitem, table, croissant, dataset, files, upload, download, s3, crud]
+    tags:
+      [dataitem, table, croissant, dataset, files, upload, download, s3, crud]
     summary: "DataItem metadata registration vs content logging, dataset kinds (table, croissant, files), and storage upload/download."
   - id: "python_function"
     type: "runtime_specification"
     title: "DigitalHub Function (Python Runtime) & Handler Guide"
     path: "runtimes/python_function.md"
-    tags: [function, python, handler, build, job, serve, ml, metrics, models, runs, tasks]
+    tags:
+      [
+        function,
+        python,
+        handler,
+        build,
+        job,
+        serve,
+        ml,
+        metrics,
+        models,
+        runs,
+        tasks,
+      ]
     summary: "Python function lifecycle, @handler decorator, input/parameter handling, model/metric logging, build/job execution."
+  - id: "workflow"
+    type: "entity_specification"
+    title: "DigitalHub Workflow Entity & Hera Pipeline Guide"
+    path: "entities/workflow.md"
+    tags:
+      [
+        workflow,
+        pipeline,
+        dag,
+        hera,
+        argo,
+        orchestration,
+        mlops,
+        crud,
+        tasks,
+        triggers,
+      ]
+    summary: "Workflow entity CRUD, Hera runtime (build/pipeline actions), pipeline definition DSL (step, DAG), tasks, triggers, and end-to-end recipe."
+  - id: "trigger"
+    type: "entity_specification"
+    title: "DigitalHub Trigger Entity & Automation Guide"
+    path: "entities/trigger.md"
+    tags:
+      [
+        trigger,
+        scheduler,
+        lifecycle,
+        cron,
+        automation,
+        event,
+        orchestration,
+        crud,
+      ]
+    summary: "Trigger entity CRUD, scheduler (Quartz cron) and lifecycle (event-driven) kinds, spec fields (task/function/workflow/schedule/key/states/template), stop/save/refresh, and creation from function/workflow objects."
   - id: "recipes"
     type: "workflow_recipes"
     title: "DigitalHub End-to-End Workflow Recipes"
@@ -38,7 +86,8 @@ topics:
     type: "governance_standard"
     title: "DigitalHub Platform Governance & Standards"
     path: "governance/standards.md"
-    tags: [governance, standards, naming_conventions, labels, compliance, security]
+    tags:
+      [governance, standards, naming_conventions, labels, compliance, security]
     summary: "Platform standards for resource naming, mandatory metadata labeling, and operational security."
 ---
 
@@ -48,17 +97,21 @@ Welcome to the DigitalHub Open Knowledge Format (OKF) Knowledge Base. This knowl
 
 ## Available Documentation Topics
 
-| Topic ID | Entity / Domain | Document Type | Description |
-| :--- | :--- | :--- | :--- |
-| **`project`** | `Project` | Entity Specification | Complete reference for creating, listing, searching, sharing, and exporting DigitalHub projects. |
-| **`dataitem`** | `DataItem` | Entity Specification | Complete guide for managing datasets (`table`, `croissant`, `dataitem`), uploading/downloading files, and storage interactions. |
-| **`python_function`** | `Function` (Python) | Runtime Specification | Full guide on writing `@handler` code, function creation, container builds, batch jobs, real-time serving, and metric/model logging. |
-| **`recipes`** | `Workflows` | Workflow Recipes | Complete end-to-end recipes for multi-step data engineering and MLOps pipelines. |
-| **`troubleshooting`** | `Error Recovery` | Troubleshooting Guide | SDK exception recovery, configuration debugging, and self-healing recommendations. |
-| **`governance`** | `Standards` | Governance Standard | Naming conventions, mandatory label schemas, and security standards. |
+| Topic ID              | Entity / Domain     | Document Type         | Description                                                                                                                            |
+| :-------------------- | :------------------ | :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------- |
+| **`project`**         | `Project`           | Entity Specification  | Complete reference for creating, listing, searching, sharing, and exporting DigitalHub projects.                                       |
+| **`dataitem`**        | `DataItem`          | Entity Specification  | Complete guide for managing datasets (`table`, `croissant`, `dataitem`), uploading/downloading files, and storage interactions.        |
+| **`python_function`** | `Function` (Python) | Runtime Specification | Full guide on writing `@handler` code, function creation, container builds, batch jobs, real-time serving, and metric/model logging.   |
+| **`workflow`**        | `Workflow`          | Entity Specification  | DAG-based pipeline orchestration, Hera runtime `build`/`pipeline` actions, pipeline DSL (`step`, `DAG`), tasks and triggers.           |
+| **`trigger`**         | `Trigger`           | Entity Specification  | Scheduler (Quartz cron) and lifecycle (event-driven) triggers, CRUD, `stop()`, template/inputs, and creation from functions/workflows. |
+| **`recipes`**         | `Workflows`         | Workflow Recipes      | Complete end-to-end recipes for multi-step data engineering and MLOps pipelines.                                                       |
+| **`troubleshooting`** | `Error Recovery`    | Troubleshooting Guide | SDK exception recovery, configuration debugging, and self-healing recommendations.                                                     |
+| **`governance`**      | `Standards`         | Governance Standard   | Naming conventions, mandatory label schemas, and security standards.                                                                   |
 
 ## How to Retrieve Knowledge
+
 Use the knowledge tools to query these documents dynamically:
+
 - `list_knowledge_topics()`: View all available knowledge topics and summaries.
 - `get_knowledge_doc(topic, section=None)`: Read full documentation or specific section for a topic.
 - `search_knowledge(query)`: Search across all documents for specific SDK functions, parameters, or concepts.

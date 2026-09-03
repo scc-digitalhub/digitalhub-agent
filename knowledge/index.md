@@ -70,6 +70,31 @@ topics:
         crud,
       ]
     summary: "Trigger entity CRUD, scheduler (Quartz cron) and lifecycle (event-driven) kinds, spec fields (task/function/workflow/schedule/key/states/template), stop/save/refresh, and creation from function/workflow objects."
+  - id: "artifact"
+    type: "entity_specification"
+    title: "DigitalHub Artifact Entity & Storage Guide"
+    path: "entities/artifact.md"
+    tags: [artifact, files, binary, storage, upload, download, s3, crud, io]
+    summary: "Artifact entity CRUD (new/log/log_generic), register-vs-log distinction, generic kind spec (path), object methods (save/refresh/export), and I/O methods (as_file/download/upload)."
+  - id: "model"
+    type: "entity_specification"
+    title: "DigitalHub Model Entity & ML Storage Guide"
+    path: "entities/model.md"
+    tags:
+      [
+        model,
+        ml,
+        mlflow,
+        sklearn,
+        huggingface,
+        metrics,
+        storage,
+        upload,
+        download,
+        crud,
+        io,
+      ]
+    summary: "Model entity CRUD (new/log + framework-specific log_mlflow/log_sklearn/log_huggingface), kinds (model/mlflow/sklearn/huggingface) with base + kind-specific spec, I/O methods, and log_metric/log_metrics for training tracking."
   - id: "recipes"
     type: "workflow_recipes"
     title: "DigitalHub End-to-End Workflow Recipes"
@@ -97,16 +122,18 @@ Welcome to the DigitalHub Open Knowledge Format (OKF) Knowledge Base. This knowl
 
 ## Available Documentation Topics
 
-| Topic ID              | Entity / Domain     | Document Type         | Description                                                                                                                            |
-| :-------------------- | :------------------ | :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------- |
-| **`project`**         | `Project`           | Entity Specification  | Complete reference for creating, listing, searching, sharing, and exporting DigitalHub projects.                                       |
-| **`dataitem`**        | `DataItem`          | Entity Specification  | Complete guide for managing datasets (`table`, `croissant`, `dataitem`), uploading/downloading files, and storage interactions.        |
-| **`python_function`** | `Function` (Python) | Runtime Specification | Full guide on writing `@handler` code, function creation, container builds, batch jobs, real-time serving, and metric/model logging.   |
-| **`workflow`**        | `Workflow`          | Entity Specification  | DAG-based pipeline orchestration, Hera runtime `build`/`pipeline` actions, pipeline DSL (`step`, `DAG`), tasks and triggers.           |
-| **`trigger`**         | `Trigger`           | Entity Specification  | Scheduler (Quartz cron) and lifecycle (event-driven) triggers, CRUD, `stop()`, template/inputs, and creation from functions/workflows. |
-| **`recipes`**         | `Workflows`         | Workflow Recipes      | Complete end-to-end recipes for multi-step data engineering and MLOps pipelines.                                                       |
-| **`troubleshooting`** | `Error Recovery`    | Troubleshooting Guide | SDK exception recovery, configuration debugging, and self-healing recommendations.                                                     |
-| **`governance`**      | `Standards`         | Governance Standard   | Naming conventions, mandatory label schemas, and security standards.                                                                   |
+| Topic ID              | Entity / Domain     | Document Type         | Description                                                                                                                                                   |
+| :-------------------- | :------------------ | :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **`project`**         | `Project`           | Entity Specification  | Complete reference for creating, listing, searching, sharing, and exporting DigitalHub projects.                                                              |
+| **`dataitem`**        | `DataItem`          | Entity Specification  | Complete guide for managing datasets (`table`, `croissant`, `dataitem`), uploading/downloading files, and storage interactions.                               |
+| **`python_function`** | `Function` (Python) | Runtime Specification | Full guide on writing `@handler` code, function creation, container builds, batch jobs, real-time serving, and metric/model logging.                          |
+| **`workflow`**        | `Workflow`          | Entity Specification  | DAG-based pipeline orchestration, Hera runtime `build`/`pipeline` actions, pipeline DSL (`step`, `DAG`), tasks and triggers.                                  |
+| **`trigger`**         | `Trigger`           | Entity Specification  | Scheduler (Quartz cron) and lifecycle (event-driven) triggers, CRUD, `stop()`, template/inputs, and creation from functions/workflows.                        |
+| **`artifact`**        | `Artifact`          | Entity Specification  | Binary/file artifacts: register-vs-log, generic `artifact` kind spec (`path`), CRUD, and I/O methods (`as_file`, `download`, `upload`).                       |
+| **`model`**           | `Model`             | Entity Specification  | ML models: generic + `mlflow`/`sklearn`/`huggingface` kinds, framework-specific log helpers, I/O methods, and metrics tracking (`log_metric`, `log_metrics`). |
+| **`recipes`**         | `Workflows`         | Workflow Recipes      | Complete end-to-end recipes for multi-step data engineering and MLOps pipelines.                                                                              |
+| **`troubleshooting`** | `Error Recovery`    | Troubleshooting Guide | SDK exception recovery, configuration debugging, and self-healing recommendations.                                                                            |
+| **`governance`**      | `Standards`         | Governance Standard   | Naming conventions, mandatory label schemas, and security standards.                                                                                          |
 
 ## How to Retrieve Knowledge
 

@@ -5,6 +5,7 @@ from tools.workflow_tools import WORKFLOW_TOOLS
 from tools.trigger_tools import TRIGGER_TOOLS
 from tools.artifact_tools import ARTIFACT_TOOLS
 from tools.model_tools import MODEL_TOOLS
+from tools.secret_tools import SECRET_TOOLS
 from tools.knowledge_tools import KNOWLEDGE_TOOLS
 
 ALL_TOOLS = (
@@ -16,6 +17,7 @@ ALL_TOOLS = (
     + TRIGGER_TOOLS
     + ARTIFACT_TOOLS
     + MODEL_TOOLS
+    + SECRET_TOOLS
 )
 
 __all__ = [
@@ -27,5 +29,6 @@ __all__ = [
     "TRIGGER_TOOLS",
     "ARTIFACT_TOOLS",
     "MODEL_TOOLS",
+    "SECRET_TOOLS",
     "ALL_TOOLS",
 ]

@@ -95,6 +95,12 @@ topics:
         io,
       ]
     summary: "Model entity CRUD (new/log + framework-specific log_mlflow/log_sklearn/log_huggingface), kinds (model/mlflow/sklearn/huggingface) with base + kind-specific spec, I/O methods, and log_metric/log_metrics for training tracking."
+  - id: "secret"
+    type: "entity_specification"
+    title: "DigitalHub Secret Entity & Credentials Guide"
+    path: "entities/secret.md"
+    tags: [secret, credentials, kubernetes, security, key_value, crud, io]
+    summary: "Secret entity CRUD (single kind), project-scoped key/value credentials backed by Kubernetes Secret Manager, metadata-only export, and set_secret_value/read_secret_value I/O methods."
   - id: "recipes"
     type: "workflow_recipes"
     title: "DigitalHub End-to-End Workflow Recipes"
@@ -131,6 +137,7 @@ Welcome to the DigitalHub Open Knowledge Format (OKF) Knowledge Base. This knowl
 | **`trigger`**         | `Trigger`           | Entity Specification  | Scheduler (Quartz cron) and lifecycle (event-driven) triggers, CRUD, `stop()`, template/inputs, and creation from functions/workflows.                        |
 | **`artifact`**        | `Artifact`          | Entity Specification  | Binary/file artifacts: register-vs-log, generic `artifact` kind spec (`path`), CRUD, and I/O methods (`as_file`, `download`, `upload`).                       |
 | **`model`**           | `Model`             | Entity Specification  | ML models: generic + `mlflow`/`sklearn`/`huggingface` kinds, framework-specific log helpers, I/O methods, and metrics tracking (`log_metric`, `log_metrics`). |
+| **`secret`**          | `Secret`            | Entity Specification  | Project-scoped key/value credentials (Kubernetes Secret Manager), CRUD, metadata-only YAML export, and `set_secret_value`/`read_secret_value` I/O.            |
 | **`recipes`**         | `Workflows`         | Workflow Recipes      | Complete end-to-end recipes for multi-step data engineering and MLOps pipelines.                                                                              |
 | **`troubleshooting`** | `Error Recovery`    | Troubleshooting Guide | SDK exception recovery, configuration debugging, and self-healing recommendations.                                                                            |
 | **`governance`**      | `Standards`         | Governance Standard   | Naming conventions, mandatory label schemas, and security standards.                                                                                          |

@@ -11,14 +11,18 @@ def new_dh_workflow(
     description: Optional[str] = None,
     labels: Optional[List[str]] = None,
     embedded: bool = False,
-    kwargs: Optional[Dict[str, Any]] = None,
+    extra_specs: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ):
     """
     Create a Workflow instance in DigitalHub with the given parameters.
     Kind-specific spec fields (e.g. 'code_src', 'handler', 'code', 'base64', 'lang' for
-    kind='hera') must be provided inside 'kwargs'.
+    kind='hera') must be provided inside 'extra_specs'.
     """
-    spec_kwargs = kwargs or {}
+    raw_specs = extra_specs or kwargs.get("kwargs") or kwargs.get("v__kwargs") or {}
+    if not isinstance(raw_specs, dict):
+        raw_specs = {}
+    spec_kwargs = {k: v for k, v in raw_specs.items() if k not in ("v__kwargs", "kwargs")}
     return dh.new_workflow(
         project=project,
         name=name,

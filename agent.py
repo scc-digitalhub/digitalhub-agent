@@ -10,10 +10,15 @@ from prompts import SYSTEM_PROMPT
 def _on_tool_error(exc: Exception, request: ToolCallRequest) -> str:
     """Return the raw SDK exception message with OKF troubleshooting guidance to the model for self-correction."""
     tool_name = request.tool_call["name"]
+    # Infer entity topic from tool name (e.g. 'new_dh_secret' -> 'secret')
+    clean_name = tool_name.replace("new_dh_", "").replace("get_dh_", "").replace("list_dh_", "").replace("delete_dh_", "")
+    entity_topic = clean_name.split("_")[0]
     return (
         f"SDK Exception in tool '{tool_name}': {exc}\n"
-        f"Self-Correction Tip: Use `get_knowledge_doc('troubleshooting')` or "
-        f"`search_knowledge('{type(exc).__name__}')` to diagnose parameter or configuration errors."
+        f"Self-Correction Guidance:\n"
+        f"1. Check the entity specification: `get_knowledge_doc('{entity_topic}')`.\n"
+        f"2. Consult the troubleshooting guide: `get_knowledge_doc('troubleshooting')` or `search_knowledge('{type(exc).__name__}')`.\n"
+        f"3. Verify parameter requirements before retrying."
     )
 
 

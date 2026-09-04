@@ -82,9 +82,24 @@ This guide maps common DigitalHub SDK runtime errors and exceptions to their roo
 
 ---
 
-## 5. Cross-References
+## 5. Secret Errors
+
+### 5.1 `ValueError: secret_value must be provided.`
+
+- **Cause**: `new_dh_secret` was called without a `secret_value` or with `secret_value=None`. Unlike other entities, secrets cannot exist without an initial value in DigitalHub.
+- **Remediation**: Prompt the user to provide the secret value, or pass a valid non-empty string as `secret_value` when calling `new_dh_secret`.
+
+### 5.2 `BackendError: Invalid resource name for secret`
+
+- **Cause**: Secret names are mapped directly to keys in the Kubernetes Secret Manager, which requires lowercase alphanumeric kebab-case (`[a-z0-9]([-a-z0-9]*[a-z0-9])?`). Underscores, spaces, or uppercase letters cause validation failures.
+- **Remediation**: Convert the secret name to lowercase alphanumeric kebab-case (e.g. change `MY_SECRET_KEY` to `my-secret-key`).
+
+---
+
+## 6. Cross-References
 
 - [Project Guide](../entities/project.md)
 - [DataItem Guide](../entities/dataitem.md)
 - [Python Function Guide](../runtimes/python_function.md)
+- [Secret Guide](../entities/secret.md)
 - [Workflow Recipes](../workflows/recipes.md)

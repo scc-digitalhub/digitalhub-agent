@@ -3,10 +3,6 @@ from langchain_core.tools import tool
 import digitalhub as dh
 
 
-# ==============================================================================
-# 1. Trigger CRUD Tools
-# ==============================================================================
-
 @tool
 def new_dh_trigger(
     project: str,
@@ -19,15 +15,16 @@ def new_dh_trigger(
     description: Optional[str] = None,
     labels: Optional[List[str]] = None,
     embedded: bool = False,
-    kwargs: Optional[Dict[str, Any]] = None,
+    extra_specs: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ):
     """
     Create a Trigger instance in DigitalHub with the given parameters.
 
     Kinds:
-      - 'scheduler'  : time-based (cron) trigger; provide 'schedule' via kwargs.
+      - 'scheduler'  : time-based (cron) trigger; provide 'schedule' via extra_specs.
       - 'lifecycle'  : event-based trigger reacting to entity state changes;
-                       provide 'key' and 'states' via kwargs.
+                       provide 'key' and 'states' via extra_specs.
 
     Identifier formats:
       - task     : "<task-kind>://<project>/<task-id>"
@@ -35,9 +32,12 @@ def new_dh_trigger(
       - workflow : "<workflow-kind>://<project>/<workflow-name>:<workflow-id>"
 
     Provide exactly one of 'function' or 'workflow' as the execution target.
-    Kind-specific spec fields (schedule / key / states / template) go inside 'kwargs'.
+    Kind-specific spec fields (schedule / key / states / template) go inside 'extra_specs'.
     """
-    spec_kwargs = kwargs or {}
+    raw_specs = extra_specs or kwargs.get("kwargs") or kwargs.get("v__kwargs") or {}
+    if not isinstance(raw_specs, dict):
+        raw_specs = {}
+    spec_kwargs = {k: v for k, v in raw_specs.items() if k not in ("v__kwargs", "kwargs")}
     return dh.new_trigger(
         project=project,
         name=name,
@@ -148,11 +148,6 @@ def delete_dh_trigger(
         delete_all_versions=delete_all_versions,
     )
 
-
-# ==============================================================================
-# 2. Trigger Object Methods (save / refresh / export / stop)
-# ==============================================================================
-
 @tool
 def save_dh_trigger(
     project_name: str,
@@ -201,10 +196,6 @@ def stop_dh_trigger(
     trg = dh.get_trigger(name, project=project_name)
     return trg.stop()
 
-
-# ==============================================================================
-# 3. Specialized Kind Wrappers for Convenience
-# ==============================================================================
 
 @tool
 def new_dh_scheduler_trigger(
@@ -284,19 +275,16 @@ def new_dh_lifecycle_trigger(
 
 
 TRIGGER_TOOLS = [
-    # 1. Trigger CRUD
     new_dh_trigger,
     get_dh_trigger,
     import_dh_trigger,
     list_dh_triggers,
     update_dh_trigger,
     delete_dh_trigger,
-    # 2. Trigger Methods
     save_dh_trigger,
     refresh_dh_trigger,
     export_dh_trigger,
     stop_dh_trigger,
-    # 3. Kind wrappers
     new_dh_scheduler_trigger,
     new_dh_lifecycle_trigger,
 ]

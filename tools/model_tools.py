@@ -14,7 +14,8 @@ def new_dh_model(
     embedded: bool = False,
     path: Optional[str] = None,
     extensions: Optional[List[dict]] = None,
-    kwargs: Optional[Dict[str, Any]] = None,
+    extra_specs: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ):
     """
     Create a new Model entity in DigitalHub WITHOUT uploading file content.
@@ -23,9 +24,12 @@ def new_dh_model(
     path. 'path' becomes both the model's spec.path (source of downloads) and
     the default destination of upload(). Kind-specific spec fields
     (framework, algorithm, base_model, parameters, metrics, and kind-specific
-    extras like flavor/signature/model_id) go inside 'kwargs'.
+    extras like flavor/signature/model_id) go inside 'extra_specs'.
     """
-    spec_kwargs = kwargs or {}
+    raw_specs = extra_specs or kwargs.get("kwargs") or kwargs.get("v__kwargs") or {}
+    if not isinstance(raw_specs, dict):
+        raw_specs = {}
+    spec_kwargs = {k: v for k, v in raw_specs.items() if k not in ("v__kwargs", "kwargs")}
     return dh.new_model(
         project=project,
         name=name,
@@ -48,7 +52,8 @@ def log_dh_model(
     kind: str = "model",
     drop_existing: bool = False,
     path: Optional[str] = None,
-    kwargs: Optional[Dict[str, Any]] = None,
+    extra_specs: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ):
     """
     Log a model: create the entity AND upload the local file(s) to the model store.
@@ -56,7 +61,10 @@ def log_dh_model(
     'source' can be a single local filepath, a directory, or a list of paths.
     'path' is the destination path in the model store; auto-generated if omitted.
     """
-    spec_kwargs = kwargs or {}
+    raw_specs = extra_specs or kwargs.get("kwargs") or kwargs.get("v__kwargs") or {}
+    if not isinstance(raw_specs, dict):
+        raw_specs = {}
+    spec_kwargs = {k: v for k, v in raw_specs.items() if k not in ("v__kwargs", "kwargs")}
     return dh.log_model(
         project=project,
         name=name,
@@ -77,13 +85,17 @@ def log_dh_generic_model(
     path: Optional[str] = None,
     description: Optional[str] = None,
     labels: Optional[List[str]] = None,
-    kwargs: Optional[Dict[str, Any]] = None,
+    extra_specs: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ):
     """
     Log a generic model (kind='model') from a local path to the model store.
     Convenience shortcut for a plain model with description and labels.
     """
-    spec_kwargs = kwargs or {}
+    raw_specs = extra_specs or kwargs.get("kwargs") or kwargs.get("v__kwargs") or {}
+    if not isinstance(raw_specs, dict):
+        raw_specs = {}
+    spec_kwargs = {k: v for k, v in raw_specs.items() if k not in ("v__kwargs", "kwargs")}
     return dh.log_generic_model(
         project=project,
         name=name,
@@ -105,15 +117,19 @@ def log_dh_mlflow_model(
     path: Optional[str] = None,
     description: Optional[str] = None,
     labels: Optional[List[str]] = None,
-    kwargs: Optional[Dict[str, Any]] = None,
+    extra_specs: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ):
     """
     Log an MLflow model (kind='mlflow') from a local MLflow directory.
 
     MLflow-specific spec fields (flavor, model_config, input_datasets, signature)
-    may be provided inside 'kwargs'.
+    may be provided inside 'extra_specs'.
     """
-    spec_kwargs = kwargs or {}
+    raw_specs = extra_specs or kwargs.get("kwargs") or kwargs.get("v__kwargs") or {}
+    if not isinstance(raw_specs, dict):
+        raw_specs = {}
+    spec_kwargs = {k: v for k, v in raw_specs.items() if k not in ("v__kwargs", "kwargs")}
     return dh.log_mlflow(
         project=project,
         name=name,
@@ -135,12 +151,16 @@ def log_dh_sklearn_model(
     path: Optional[str] = None,
     description: Optional[str] = None,
     labels: Optional[List[str]] = None,
-    kwargs: Optional[Dict[str, Any]] = None,
+    extra_specs: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ):
     """
     Log a scikit-learn model (kind='sklearn') from a local file or directory.
     """
-    spec_kwargs = kwargs or {}
+    raw_specs = extra_specs or kwargs.get("kwargs") or kwargs.get("v__kwargs") or {}
+    if not isinstance(raw_specs, dict):
+        raw_specs = {}
+    spec_kwargs = {k: v for k, v in raw_specs.items() if k not in ("v__kwargs", "kwargs")}
     return dh.log_sklearn(
         project=project,
         name=name,
@@ -162,15 +182,19 @@ def log_dh_huggingface_model(
     path: Optional[str] = None,
     description: Optional[str] = None,
     labels: Optional[List[str]] = None,
-    kwargs: Optional[Dict[str, Any]] = None,
+    extra_specs: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ):
     """
     Log a HuggingFace model (kind='huggingface') from a local repository or directory.
 
     HuggingFace-specific spec fields (model_id, model_revision) may be provided
-    inside 'kwargs'.
+    inside 'extra_specs'.
     """
-    spec_kwargs = kwargs or {}
+    raw_specs = extra_specs or kwargs.get("kwargs") or kwargs.get("v__kwargs") or {}
+    if not isinstance(raw_specs, dict):
+        raw_specs = {}
+    spec_kwargs = {k: v for k, v in raw_specs.items() if k not in ("v__kwargs", "kwargs")}
     return dh.log_huggingface(
         project=project,
         name=name,

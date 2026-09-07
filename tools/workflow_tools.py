@@ -190,7 +190,8 @@ def run_dh_workflow(
     wait: bool = False,
     log_info: bool = True,
     extensions: Optional[List[dict]] = None,
-    kwargs: Optional[Dict[str, Any]] = None,
+    extra_specs: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ):
     """
     Run a workflow. Creates a new run and executes it with the specified action.
@@ -200,10 +201,13 @@ def run_dh_workflow(
       - 'pipeline' : execute the compiled pipeline on Kubernetes.
 
     Task/run parameters (e.g. 'parameters', 'volumes', 'resources', 'envs',
-    'secrets', 'profile') go inside 'kwargs'.
+    'secrets', 'profile') go inside 'extra_specs'.
     """
     wf = dh.get_workflow(name, project=project_name)
-    run_kwargs = kwargs or {}
+    raw_specs = extra_specs or kwargs.get("kwargs") or kwargs.get("v__kwargs") or {}
+    if not isinstance(raw_specs, dict):
+        raw_specs = {}
+    run_kwargs = {k: v for k, v in raw_specs.items() if k not in ("v__kwargs", "kwargs")}
     return wf.run(
         action=action,
         wait=wait,
@@ -318,13 +322,17 @@ def new_dh_workflow_task(
     project_name: str,
     name: str,
     action: str,
-    kwargs: Optional[Dict[str, Any]] = None,
+    extra_specs: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ):
     """
     Create a new workflow task. If the task already exists, it is updated.
     """
     wf = dh.get_workflow(name, project=project_name)
-    task_kwargs = kwargs or {}
+    raw_specs = extra_specs or kwargs.get("kwargs") or kwargs.get("v__kwargs") or {}
+    if not isinstance(raw_specs, dict):
+        raw_specs = {}
+    task_kwargs = {k: v for k, v in raw_specs.items() if k not in ("v__kwargs", "kwargs")}
     return wf.new_task(action, **task_kwargs)
 
 
@@ -333,13 +341,17 @@ def update_dh_workflow_task(
     project_name: str,
     name: str,
     action: str,
-    kwargs: Optional[Dict[str, Any]] = None,
+    extra_specs: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ):
     """
     Update a workflow task by action name.
     """
     wf = dh.get_workflow(name, project=project_name)
-    task_kwargs = kwargs or {}
+    raw_specs = extra_specs or kwargs.get("kwargs") or kwargs.get("v__kwargs") or {}
+    if not isinstance(raw_specs, dict):
+        raw_specs = {}
+    task_kwargs = {k: v for k, v in raw_specs.items() if k not in ("v__kwargs", "kwargs")}
     return wf.update_task(action, **task_kwargs)
 
 
@@ -351,13 +363,17 @@ def trigger_dh_workflow(
     kind: str,
     trigger_name: str,
     template: Optional[Dict[str, Any]] = None,
-    kwargs: Optional[Dict[str, Any]] = None,
+    extra_specs: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ):
     """
     Trigger workflow execution on a schedule or event.
     """
     wf = dh.get_workflow(name, project=project_name)
-    trig_kwargs = kwargs or {}
+    raw_specs = extra_specs or kwargs.get("kwargs") or kwargs.get("v__kwargs") or {}
+    if not isinstance(raw_specs, dict):
+        raw_specs = {}
+    trig_kwargs = {k: v for k, v in raw_specs.items() if k not in ("v__kwargs", "kwargs")}
     return wf.trigger(
         action=action,
         kind=kind,

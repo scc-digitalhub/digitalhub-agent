@@ -3,10 +3,6 @@ from langchain_core.tools import tool
 import digitalhub as dh
 
 
-# ==============================================================================
-# 1.  Function CRUD Tools 
-# ==============================================================================
-
 @tool
 def new_dh_function(
     project: str,
@@ -16,13 +12,18 @@ def new_dh_function(
     description: Optional[str] = None,
     labels: Optional[List[str]] = None,
     embedded: bool = False,
-    kwargs: Optional[Dict[str, Any]] = None,
-    **extra_kwargs
+    extra_specs: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ):
     """
-    Create a Function instance in DigitalHub with the given parameters.
+    Create a Function entity in DigitalHub with the given parameters.
+    Kind-specific spec fields (e.g. 'code_src', 'handler', 'python_version',
+    'requirements' for kind='python') go inside 'extra_specs'.
     """
-    spec_kwargs = kwargs or {}
+    raw_specs = extra_specs or kwargs.get("kwargs") or kwargs.get("v__kwargs") or {}
+    if not isinstance(raw_specs, dict):
+        raw_specs = {}
+    spec_kwargs = {k: v for k, v in raw_specs.items() if k not in ("v__kwargs", "kwargs")}
     return dh.new_function(
         project=project,
         name=name,
@@ -31,7 +32,7 @@ def new_dh_function(
         description=description,
         labels=labels,
         embedded=embedded,
-        **spec_kwargs
+        **spec_kwargs,
     )
 
 
@@ -39,29 +40,30 @@ def new_dh_function(
 def get_dh_function(
     identifier: str,
     project: Optional[str] = None,
-    entity_id: Optional[str] = None
+    entity_id: Optional[str] = None,
 ):
     """
     Get a Function object from the backend.
+    'identifier' can be an entity key (store://...) or the function name.
     """
     return dh.get_function(
         identifier=identifier,
         project=project,
-        entity_id=entity_id
+        entity_id=entity_id,
     )
 
 
 @tool
 def get_dh_function_versions(
     identifier: str,
-    project: Optional[str] = None
+    project: Optional[str] = None,
 ):
     """
     Get all function version instances from the backend.
     """
     return dh.get_function_versions(
         identifier=identifier,
-        project=project
+        project=project,
     )
 
 
@@ -70,7 +72,7 @@ def import_dh_function(
     file: Optional[str] = None,
     key: Optional[str] = None,
     reset_id: bool = False,
-    context: Optional[str] = None
+    context: Optional[str] = None,
 ):
     """
     Import a function object from a YAML file or from a storage key.
@@ -79,7 +81,7 @@ def import_dh_function(
         file=file,
         key=key,
         reset_id=reset_id,
-        context=context
+        context=context,
     )
 
 
@@ -93,10 +95,10 @@ def list_dh_functions(
     state: Optional[str] = None,
     created: Optional[str] = None,
     updated: Optional[str] = None,
-    versions: Optional[str] = None
+    versions: Optional[str] = None,
 ):
     """
-    List all latest version function objects from backend for a project with optional filters.
+    List latest-version function objects from backend for a project with optional filters.
     """
     return dh.list_functions(
         project=project,
@@ -107,14 +109,14 @@ def list_dh_functions(
         state=state,
         created=created,
         updated=updated,
-        versions=versions
+        versions=versions,
     )
 
 
 @tool
 def update_dh_function(
     project_name: str,
-    name: str
+    name: str,
 ):
     """
     Update a function object in the backend. Note that object specs are immutable.
@@ -129,7 +131,7 @@ def delete_dh_function(
     project: Optional[str] = None,
     entity_id: Optional[str] = None,
     delete_all_versions: bool = False,
-    cascade: bool = True
+    cascade: bool = True,
 ):
     """
     Delete a function object from backend.
@@ -139,22 +141,18 @@ def delete_dh_function(
         project=project,
         entity_id=entity_id,
         delete_all_versions=delete_all_versions,
-        cascade=cascade
+        cascade=cascade,
     )
 
-
-# ==============================================================================
-# 2. Function  Methods
-# ==============================================================================
 
 @tool
 def save_dh_function(
     project_name: str,
     name: str,
-    update: bool = False
+    update: bool = False,
 ):
     """
-    Save or update the entity into the backend.
+    Save or update the function entity into the backend.
     """
     fn = dh.get_function(name, project=project_name)
     return fn.save(update=update)
@@ -163,10 +161,10 @@ def save_dh_function(
 @tool
 def refresh_dh_function(
     project_name: str,
-    name: str
+    name: str,
 ):
     """
-    Refresh object state from backend.
+    Refresh function state from backend.
     """
     fn = dh.get_function(name, project=project_name)
     return fn.refresh()
@@ -175,14 +173,13 @@ def refresh_dh_function(
 @tool
 def export_dh_function(
     project_name: str,
-    name: str
+    name: str,
 ):
     """
-    Export object as a YAML file in the context folder.
+    Export function object as a YAML file in the context folder.
     """
     fn = dh.get_function(name, project=project_name)
     return fn.export()
-
 
 @tool
 def run_dh_function(
@@ -192,140 +189,30 @@ def run_dh_function(
     wait: bool = False,
     log_info: bool = True,
     extensions: Optional[List[dict]] = None,
-    kwargs: Optional[Dict[str, Any]] = None
+    extra_specs: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ):
     """
-    Run function. Creates a new run and executes it with specified action ('job', 'build' or 'serve').
+    Run function. Creates a new Run and executes the specified action.
+    Valid actions depend on the function kind (e.g. 'job', 'serve', 'build' for
+    kind='python'; 'transform' for kind='dbt'; etc.). Task/run parameters
+    ('inputs', 'parameters', 'volumes', 'resources', 'envs', 'secrets',
+    'profile', kind-specific fields) go inside 'extra_specs'.
+    For the python runtime, prefer the specialized wrappers in python_runtime_tools:
+    run_dh_python_job, run_dh_python_serve, run_dh_python_build.
     """
     fn = dh.get_function(name, project=project_name)
-    run_kwargs = kwargs or {}
+    raw_specs = extra_specs or kwargs.get("kwargs") or kwargs.get("v__kwargs") or {}
+    if not isinstance(raw_specs, dict):
+        raw_specs = {}
+    run_kwargs = {k: v for k, v in raw_specs.items() if k not in ("v__kwargs", "kwargs")}
     return fn.run(
         action=action,
         wait=wait,
         log_info=log_info,
         extensions=extensions,
-        **run_kwargs
+        **run_kwargs,
     )
-
-
-# Specialized Python Action Wrappers forConvenience
-
-@tool
-def run_dh_python_job(
-    project_name: str,
-    name: str,
-    local_execution: bool = False,
-    inputs: Optional[dict] = None,
-    parameters: Optional[dict] = None,
-    init_parameters: Optional[dict] = None,
-    volumes: Optional[List[dict]] = None,
-    resources: Optional[dict] = None,
-    envs: Optional[List[dict]] = None,
-    secrets: Optional[List[str]] = None,
-    profile: Optional[str] = None,
-    wait: bool = True,
-    log_info: bool = True,
-):
-    """
-    Run a Python function as a one-off batch job (action='job').
-    """
-    func = dh.get_function(name, project=project_name)
-    return func.run(
-        action="job",
-        wait=wait,
-        log_info=log_info,
-        local_execution=local_execution,
-        inputs=inputs,
-        parameters=parameters,
-        init_parameters=init_parameters,
-        volumes=volumes,
-        resources=resources,
-        envs=envs,
-        secrets=secrets,
-        profile=profile,
-    )
-
-
-@tool
-def run_dh_python_build(
-    project_name: str,
-    name: str,
-    instructions: Optional[List[str]] = None,
-    volumes: Optional[List[dict]] = None,
-    resources: Optional[dict] = None,
-    envs: Optional[List[dict]] = None,
-    secrets: Optional[List[str]] = None,
-    profile: Optional[str] = None,
-    inputs: Optional[dict] = None,
-    parameters: Optional[dict] = None,
-    init_parameters: Optional[dict] = None,
-    wait: bool = True,
-    log_info: bool = True,
-):
-    """
-    Build a container image for a Python function (action='build').
-    'instructions' are executed as RUN lines in the generated Dockerfile.
-    """
-    func = dh.get_function(name, project=project_name)
-    return func.run(
-        action="build",
-        wait=wait,
-        log_info=log_info,
-        instructions=instructions,
-        volumes=volumes,
-        resources=resources,
-        envs=envs,
-        secrets=secrets,
-        profile=profile,
-        inputs=inputs,
-        parameters=parameters,
-        init_parameters=init_parameters,
-    )
-
-
-@tool
-def run_dh_python_serve(
-    project_name: str,
-    name: str,
-    inputs: Optional[dict] = None,
-    parameters: Optional[dict] = None,
-    init_parameters: Optional[dict] = None,
-    wait: bool = True,
-    log_info: bool = True,
-    replicas: Optional[int] = None,
-    service_type: Optional[str] = None,
-    service_name: Optional[str] = None,
-    volumes: Optional[List[dict]] = None,
-    resources: Optional[dict] = None,
-    envs: Optional[List[dict]] = None,
-    secrets: Optional[List[str]] = None,
-    profile: Optional[str] = None,
-):
-    """
-    Deploy a Python function as a HTTP service endpoint (action='serve').
-    """
-    func = dh.get_function(name, project=project_name)
-    return func.run(
-        action="serve",
-        wait=wait,
-        log_info=log_info,
-        inputs=inputs,
-        parameters=parameters,
-        init_parameters=init_parameters,
-        replicas=replicas,
-        service_type=service_type,
-        service_name=service_name,
-        volumes=volumes,
-        resources=resources,
-        envs=envs,
-        secrets=secrets,
-        profile=profile,
-    )
-
-
-# ==============================================================================
-# 3. Tasks Methods
-# ==============================================================================
 
 @tool
 def list_dh_function_tasks(
@@ -337,10 +224,10 @@ def list_dh_function_tasks(
     user: Optional[str] = None,
     state: Optional[str] = None,
     created: Optional[str] = None,
-    updated: Optional[str] = None
+    updated: Optional[str] = None,
 ):
     """
-    List tasks of the executable entity from backend.
+    List tasks of the function from backend.
     """
     fn = dh.get_function(name, project=project_name)
     return fn.list_task(
@@ -350,7 +237,7 @@ def list_dh_function_tasks(
         user=user,
         state=state,
         created=created,
-        updated=updated
+        updated=updated,
     )
 
 
@@ -358,10 +245,10 @@ def list_dh_function_tasks(
 def get_dh_function_task(
     project_name: str,
     name: str,
-    action: str
+    action: str,
 ):
     """
-    Get task by action name.
+    Get function task by action name (e.g. 'job', 'serve', 'build').
     """
     fn = dh.get_function(name, project=project_name)
     return fn.get_task(action)
@@ -372,13 +259,17 @@ def new_dh_function_task(
     project_name: str,
     name: str,
     action: str,
-    kwargs: Optional[Dict[str, Any]] = None
+    extra_specs: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ):
     """
-    Create new task. If task already exists, update it.
+    Create a new function task. If the task already exists, it is updated.
     """
     fn = dh.get_function(name, project=project_name)
-    task_kwargs = kwargs or {}
+    raw_specs = extra_specs or kwargs.get("kwargs") or kwargs.get("v__kwargs") or {}
+    if not isinstance(raw_specs, dict):
+        raw_specs = {}
+    task_kwargs = {k: v for k, v in raw_specs.items() if k not in ("v__kwargs", "kwargs")}
     return fn.new_task(action, **task_kwargs)
 
 
@@ -387,19 +278,19 @@ def update_dh_function_task(
     project_name: str,
     name: str,
     action: str,
-    kwargs: Optional[Dict[str, Any]] = None
+    extra_specs: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ):
     """
-    Update task.
+    Update a function task by action name.
     """
     fn = dh.get_function(name, project=project_name)
-    task_kwargs = kwargs or {}
+    raw_specs = extra_specs or kwargs.get("kwargs") or kwargs.get("v__kwargs") or {}
+    if not isinstance(raw_specs, dict):
+        raw_specs = {}
+    task_kwargs = {k: v for k, v in raw_specs.items() if k not in ("v__kwargs", "kwargs")}
     return fn.update_task(action, **task_kwargs)
 
-
-# ==============================================================================
-# 4. Triggers Methods
-# ==============================================================================
 
 @tool
 def trigger_dh_function(
@@ -409,19 +300,23 @@ def trigger_dh_function(
     kind: str,
     trigger_name: str,
     template: Optional[Dict[str, Any]] = None,
-    kwargs: Optional[Dict[str, Any]] = None
+    extra_specs: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ):
     """
     Trigger function execution on a schedule or event.
     """
     fn = dh.get_function(name, project=project_name)
-    trig_kwargs = kwargs or {}
+    raw_specs = extra_specs or kwargs.get("kwargs") or kwargs.get("v__kwargs") or {}
+    if not isinstance(raw_specs, dict):
+        raw_specs = {}
+    trig_kwargs = {k: v for k, v in raw_specs.items() if k not in ("v__kwargs", "kwargs")}
     return fn.trigger(
         action=action,
         kind=kind,
         name=trigger_name,
         template=template,
-        **trig_kwargs
+        **trig_kwargs,
     )
 
 
@@ -436,10 +331,10 @@ def list_dh_function_triggers(
     created: Optional[str] = None,
     updated: Optional[str] = None,
     versions: Optional[str] = None,
-    task: Optional[str] = None
+    task: Optional[str] = None,
 ):
     """
-    List triggers of the executable entity from backend.
+    List triggers of the function from backend.
     """
     fn = dh.get_function(name, project=project_name)
     return fn.list_triggers(
@@ -450,7 +345,7 @@ def list_dh_function_triggers(
         created=created,
         updated=updated,
         versions=versions,
-        task=task
+        task=task,
     )
 
 
@@ -458,93 +353,16 @@ def list_dh_function_triggers(
 def get_dh_function_trigger(
     project_name: str,
     name: str,
-    identifier: str
+    identifier: str,
 ):
     """
-    Get trigger object from backend.
+    Get a function trigger by identifier (entity key or trigger ID).
     """
     fn = dh.get_function(name, project=project_name)
     return fn.get_trigger(identifier)
 
 
-# ==============================================================================
-# 5. Run Methods 
-# ==============================================================================
-
-@tool
-def get_dh_run_output(
-    project: str,
-    run_id: str,
-    output_name: str,
-    as_key: bool = False,
-    as_dict: bool = False
-):
-    """
-    Get a run's output by name. Returns the entity, its key, or a dict representation.
-    """
-    run = dh.get_run(run_id, project=project)
-    return run.output(output_name, as_key=as_key, as_dict=as_dict)
-
-
-@tool
-def get_dh_run_outputs(
-    project: str,
-    run_id: str,
-    as_key: bool = False,
-    as_dict: bool = False
-):
-    """
-    Get all of a run's outputs. Returns a dict of output objects, keys, or dicts.
-    """
-    run = dh.get_run(run_id, project=project)
-    return run.outputs(as_key=as_key, as_dict=as_dict)
-
-
-@tool
-def get_dh_run_result(
-    project: str,
-    run_id: str,
-    result_name: str
-):
-    """
-    Get a run's result (primitive value) by name.
-    """
-    run = dh.get_run(run_id, project=project)
-    return run.result(result_name)
-
-
-@tool
-def get_dh_run_results(
-    project: str,
-    run_id: str
-):
-    """
-    Get all of a run's results (primitive values).
-    """
-    run = dh.get_run(run_id, project=project)
-    return run.results()
-
-
-@tool
-def invoke_dh_run_service(
-    project: str,
-    run_id: str,
-    method: str = "POST",
-    url: Optional[str] = None,
-    **kwargs,
-):
-    """
-    Invoke the HTTP endpoint of a served function run.
-    Uses the service URL from the run status if no url is specified.
-    Defaults to POST if json or data is provided, GET otherwise.
-    Returns the response status code and body.
-    """
-    run = dh.get_run(run_id, project=project)
-    return run.invoke(method=method, url=url, **kwargs)
-
-
 FUNCTION_TOOLS = [
-    # 1. Function CRUD
     new_dh_function,
     get_dh_function,
     get_dh_function_versions,
@@ -552,27 +370,15 @@ FUNCTION_TOOLS = [
     list_dh_functions,
     update_dh_function,
     delete_dh_function,
-    # 2. Function Methods
     save_dh_function,
     refresh_dh_function,
     export_dh_function,
     run_dh_function,
-    run_dh_python_job,
-    run_dh_python_build,
-    run_dh_python_serve,
-    # 3. Tasks
     list_dh_function_tasks,
     get_dh_function_task,
     new_dh_function_task,
     update_dh_function_task,
-    # 4. Triggers
     trigger_dh_function,
     list_dh_function_triggers,
     get_dh_function_trigger,
-    # 5. Runs
-    get_dh_run_output,
-    get_dh_run_outputs,
-    get_dh_run_result,
-    get_dh_run_results,
-    invoke_dh_run_service,
 ]

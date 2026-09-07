@@ -17,25 +17,51 @@ topics:
     tags:
       [dataitem, table, croissant, dataset, files, upload, download, s3, crud]
     summary: "DataItem metadata registration vs content logging, dataset kinds (table, croissant, files), and storage upload/download."
-  - id: "python_function"
-    type: "runtime_specification"
-    title: "DigitalHub Function (Python Runtime) & Handler Guide"
-    path: "runtimes/python_function.md"
+  - id: "function"
+    type: "entity_specification"
+    title: "DigitalHub Function Entity & SDK Guide"
+    path: "entities/function.md"
     tags:
       [
         function,
+        executable,
+        python,
+        dbt,
+        container,
+        hera,
+        modelserve,
+        flower,
+        crud,
+        tasks,
+        triggers,
+      ]
+    summary: "Function entity CRUD, generic run() method, task and trigger methods, and enumeration of supported kinds (python, guardrail, openinference, dbt, container, modelserve, flower) with links to runtime docs."
+  - id: "run"
+    type: "entity_specification"
+    title: "DigitalHub Run Entity & Execution Guide"
+    path: "entities/run.md"
+    tags:
+      [run, execution, lifecycle, metrics, outputs, results, invoke, logs, crud]
+    summary: "Run entity CRUD (UUID-addressed, no versions), lifecycle methods (wait/stop/resume/logs), metric logging, output/result readers, and service invoke() — the entity produced by Function.run() and Workflow.run()."
+  - id: "python"
+    type: "runtime_specification"
+    title: "DigitalHub Python Runtime & Handler Guide"
+    path: "runtimes/python.md"
+    tags:
+      [
+        runtime,
         python,
         handler,
-        build,
         job,
         serve,
-        ml,
-        metrics,
-        models,
-        runs,
-        tasks,
+        build,
+        inputs,
+        parameters,
+        requirements,
+        python_version,
+        nuclio,
       ]
-    summary: "Python function lifecycle, @handler decorator, input/parameter handling, model/metric logging, build/job execution."
+    summary: "Python runtime spec (kind='python'): @handler decorator, reserved arguments, function spec fields (python_version, code_src, handler, requirements, base_image, init_function), and job/serve/build action parameters (task + run) with local-vs-remote execution."
   - id: "workflow"
     type: "entity_specification"
     title: "DigitalHub Workflow Entity & Hera Pipeline Guide"
@@ -128,19 +154,21 @@ Welcome to the DigitalHub Open Knowledge Format (OKF) Knowledge Base. This knowl
 
 ## Available Documentation Topics
 
-| Topic ID              | Entity / Domain     | Document Type         | Description                                                                                                                                                   |
-| :-------------------- | :------------------ | :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **`project`**         | `Project`           | Entity Specification  | Complete reference for creating, listing, searching, sharing, and exporting DigitalHub projects.                                                              |
-| **`dataitem`**        | `DataItem`          | Entity Specification  | Complete guide for managing datasets (`table`, `croissant`, `dataitem`), uploading/downloading files, and storage interactions.                               |
-| **`python_function`** | `Function` (Python) | Runtime Specification | Full guide on writing `@handler` code, function creation, container builds, batch jobs, real-time serving, and metric/model logging.                          |
-| **`workflow`**        | `Workflow`          | Entity Specification  | DAG-based pipeline orchestration, Hera runtime `build`/`pipeline` actions, pipeline DSL (`step`, `DAG`), tasks and triggers.                                  |
-| **`trigger`**         | `Trigger`           | Entity Specification  | Scheduler (Quartz cron) and lifecycle (event-driven) triggers, CRUD, `stop()`, template/inputs, and creation from functions/workflows.                        |
-| **`artifact`**        | `Artifact`          | Entity Specification  | Binary/file artifacts: register-vs-log, generic `artifact` kind spec (`path`), CRUD, and I/O methods (`as_file`, `download`, `upload`).                       |
-| **`model`**           | `Model`             | Entity Specification  | ML models: generic + `mlflow`/`sklearn`/`huggingface` kinds, framework-specific log helpers, I/O methods, and metrics tracking (`log_metric`, `log_metrics`). |
-| **`secret`**          | `Secret`            | Entity Specification  | Project-scoped key/value credentials (Kubernetes Secret Manager), CRUD, metadata-only YAML export, and `set_secret_value`/`read_secret_value` I/O.            |
-| **`recipes`**         | `Workflows`         | Workflow Recipes      | Complete end-to-end recipes for multi-step data engineering and MLOps pipelines.                                                                              |
-| **`troubleshooting`** | `Error Recovery`    | Troubleshooting Guide | SDK exception recovery, configuration debugging, and self-healing recommendations.                                                                            |
-| **`governance`**      | `Standards`         | Governance Standard   | Naming conventions, mandatory label schemas, and security standards.                                                                                          |
+| Topic ID              | Entity / Domain  | Document Type         | Description                                                                                                                                                               |
+| :-------------------- | :--------------- | :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **`project`**         | `Project`        | Entity Specification  | Complete reference for creating, listing, searching, sharing, and exporting DigitalHub projects.                                                                          |
+| **`dataitem`**        | `DataItem`       | Entity Specification  | Complete guide for managing datasets (`table`, `croissant`, `dataitem`), uploading/downloading files, and storage interactions.                                           |
+| **`function`**        | `Function`       | Entity Specification  | Function entity CRUD, generic `run()`, tasks and triggers, and the kinds table (`python`, `dbt`, `container`, `modelserve`, `flower`, ...) linking to each runtime.       |
+| **`run`**             | `Run`            | Entity Specification  | Execution entity: CRUD, lifecycle (`wait`/`stop`/`resume`/`logs`), metrics, outputs/results, and `invoke` for served endpoints — the entity produced by `Function.run()`. |
+| **`python`**          | Python runtime   | Runtime Specification | Python runtime (kind `python`): `@handler` decorator, function spec (`python_version`, `code_src`, `handler`, `requirements`, ...), and `job`/`serve`/`build` actions.    |
+| **`workflow`**        | `Workflow`       | Entity Specification  | DAG-based pipeline orchestration, Hera runtime `build`/`pipeline` actions, pipeline DSL (`step`, `DAG`), tasks and triggers.                                              |
+| **`trigger`**         | `Trigger`        | Entity Specification  | Scheduler (Quartz cron) and lifecycle (event-driven) triggers, CRUD, `stop()`, template/inputs, and creation from functions/workflows.                                    |
+| **`artifact`**        | `Artifact`       | Entity Specification  | Binary/file artifacts: register-vs-log, generic `artifact` kind spec (`path`), CRUD, and I/O methods (`as_file`, `download`, `upload`).                                   |
+| **`model`**           | `Model`          | Entity Specification  | ML models: generic + `mlflow`/`sklearn`/`huggingface` kinds, framework-specific log helpers, I/O methods, and metrics tracking (`log_metric`, `log_metrics`).             |
+| **`secret`**          | `Secret`         | Entity Specification  | Project-scoped key/value credentials (Kubernetes Secret Manager), CRUD, metadata-only YAML export, and `set_secret_value`/`read_secret_value` I/O.                        |
+| **`recipes`**         | `Workflows`      | Workflow Recipes      | Complete end-to-end recipes for multi-step data engineering and MLOps pipelines.                                                                                          |
+| **`troubleshooting`** | `Error Recovery` | Troubleshooting Guide | SDK exception recovery, configuration debugging, and self-healing recommendations.                                                                                        |
+| **`governance`**      | `Standards`      | Governance Standard   | Naming conventions, mandatory label schemas, and security standards.                                                                                                      |
 
 ## How to Retrieve Knowledge
 

@@ -69,7 +69,7 @@ This guide maps common DigitalHub SDK runtime errors and exceptions to their roo
 
 - **Cause**: The handler function signature expects specific parameters or inputs that were not passed in `inputs={...}` or `parameters={...}` during the job run.
 - **Remediation**:
-  1. Consult [Python Function Runtime Guide](../runtimes/python_function.md) for parameter vs input semantics.
+  1. Consult [Python Runtime Guide](../runtimes/python.md) for parameter vs input semantics.
   2. Ensure all data entities are passed in `inputs={"arg_name": "entity_name"}` and scalars in `parameters={"arg_name": value}`.
   3. Note: `project` and `run` parameters are auto-injected by name and do not need to be passed in `inputs` or `parameters`.
 
@@ -79,6 +79,24 @@ This guide maps common DigitalHub SDK runtime errors and exceptions to their roo
 - **Remediation**:
   1. Update function definition with `requirements=["<package-name>"]`.
   2. Re-trigger `build_dh_function`.
+
+### 4.4 Run / Job / Build Failure Self-Correction Protocol (Logs $\rightarrow$ Fix $\rightarrow$ Rerun)
+
+- **Problem**: A build run or job run finishes in an `ERROR`, `FAILED`, or aborted state.
+- **Protocol**:
+  1. **Fetch Failure Logs Immediately**:
+     Call `get_dh_run_logs(project="<project>", run_id="<failed-run-id>")`.
+  2. **Diagnose Root Cause from Logs**:
+     - _Traceback error in user code_: Identify line number and exception (e.g. `KeyError`, `ValueError`, bad type).
+     - _Missing package_: Identify missing import name.
+     - _Handler mismatch_: Check handler signature against `inputs` and `parameters`.
+     - _Build failure_: Check pip dependency conflicts or syntax errors.
+  3. **Correct Function / Entity**:
+     - Update handler source code or pip requirements using `new_dh_python_function` or `update_dh_function`.
+  4. **Re-Build (if dependencies or code changed)**:
+     - Run `run_dh_python_build` (or `build_dh_function`) and block with `wait=True` until `status.state == 'COMPLETED'`.
+  5. **Re-Execute Job**:
+     - Re-trigger `run_dh_python_job` (or `job_dh_function`) with the corrected parameters and verify successful execution.
 
 ---
 
@@ -100,6 +118,8 @@ This guide maps common DigitalHub SDK runtime errors and exceptions to their roo
 
 - [Project Guide](../entities/project.md)
 - [DataItem Guide](../entities/dataitem.md)
-- [Python Function Guide](../runtimes/python_function.md)
+- [Function Guide](../entities/function.md)
+- [Python Runtime Guide](../runtimes/python.md)
+- [Run Guide](../entities/run.md)
 - [Secret Guide](../entities/secret.md)
 - [Workflow Recipes](../workflows/recipes.md)

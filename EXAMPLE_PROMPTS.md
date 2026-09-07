@@ -54,18 +54,24 @@ In project 'my-agentic-testing':
 
 ---
 
-### Step 6: Scikit-Learn ML Workflow (`mlsklearn`) - Natural Language
+### Scenario 6: Scikit-Learn ML Workflow (`mlsklearn`) - Natural Language
 
 ```text
-I want to train a machine learning model on iris dataset data. 
+I want to train a machine learning model on iris dataset data.
 Please create a project called 'iris-ml-project', register the dataset from 'https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv', write a python function that trains a Scikit-Learn RandomForest classifier on it, build the function, and run the job to log the metrics and final model.
 ```
 
 ---
 
-### Step 7: MLflow ML Workflow (`mlmlflow`) - Natural Language
+### Scenario 7: MLflow ML Workflow (`mlmlflow`) - Natural Language
 
 ```text
 I want to build an MLflow tracking pipeline for wine quality prediction.
 Create a project called 'wine-mlflow-project', load dataset from 'https://raw.githubusercontent.com/mlflow/mlflow-example/master/wine-quality.csv', write a python function to train an ElasticNet regression model with alpha=0.5 and l1_ratio=0.5 using MLflow tracking, build the function, and run the job to record the model and performance metrics.
+```
+
+### Scenario 8: Audio AI — Whisper Speech-to-Text & HuggingFace Models
+
+```text
+Create a project called 'speech-intelligence'. Register a public audio artifact named 'sample_speech_audio' pointing to the public open audio file 'https://cdn-media.huggingface.co/speech_samples/sample1.flac'. Next, create a Python function named 'whisper_transcribe' that loads the open-access 'openai/whisper-tiny' model using Hugging Face Transformers pipeline (no token needed), transcribes the audio file, and logs audio metrics. Make sure the function specifies the necessary pip requirements (transformers, torch, soundfile, librosa). Build the function container, run the job to transcribe the audio, save the transcription output as a text artifact, and log the Whisper model into the project repository.
 ```

@@ -2,7 +2,6 @@ from typing import Optional, List, Dict, Any
 from langchain_core.tools import tool
 import digitalhub as dh
 
-
 @tool
 def new_dh_run(
     project: str,
@@ -223,19 +222,6 @@ def resume_dh_run(
 
 
 @tool
-def get_dh_run_logs(
-    project: str,
-    run_id: str,
-):
-    """
-    Get run logs. Returns an empty list if none are present. For local
-    executions, logs are also printed to the console.
-    """
-    run = dh.get_run(run_id, project=project)
-    return run.logs()
-
-
-@tool
 def log_dh_run_metric(
     project: str,
     run_id: str,
@@ -367,7 +353,6 @@ RUN_TOOLS = [
     wait_dh_run,
     stop_dh_run,
     resume_dh_run,
-    get_dh_run_logs,
     log_dh_run_metric,
     log_dh_run_metrics,
     get_dh_run_output,

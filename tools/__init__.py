@@ -7,6 +7,7 @@ from .artifact_tools import ARTIFACT_TOOLS
 from .model_tools import MODEL_TOOLS
 from .secret_tools import SECRET_TOOLS
 from .run_tools import RUN_TOOLS
+from .log_tools import LOG_TOOLS
 from .python_runtime_tools import PYTHON_RUNTIME_TOOLS
 from .knowledge_tools import KNOWLEDGE_TOOLS
 
@@ -21,6 +22,7 @@ ALL_TOOLS = (
     + MODEL_TOOLS
     # + SECRET_TOOLS
     + RUN_TOOLS
+    + LOG_TOOLS
     + PYTHON_RUNTIME_TOOLS
 )
 
@@ -35,6 +37,7 @@ __all__ = [
     "MODEL_TOOLS",
     "SECRET_TOOLS",
     "RUN_TOOLS",
+    "LOG_TOOLS",
     "PYTHON_RUNTIME_TOOLS",
     "ALL_TOOLS",
 ]

@@ -221,15 +221,19 @@ dh.delete_run("<run-id>", project="my-project")
 
 ### 5.2 Lifecycle methods
 
-| Method     | Purpose                                                   | Agent tool        |
-| :--------- | :-------------------------------------------------------- | :---------------- |
-| `run()`    | Start the run (needed only if created explicitly)         | `start_dh_run`    |
-| `wait()`   | Block until the run reaches a terminal state              | `wait_dh_run`     |
-| `stop()`   | Interrupt the run                                         | `stop_dh_run`     |
-| `resume()` | Resume a previously stopped run                           | `resume_dh_run`   |
-| `logs()`   | Get run logs (empty list if none). Local runs also print. | `get_dh_run_logs` |
+| Method     | Purpose                                                                             | Agent tool        |
+| :--------- | :---------------------------------------------------------------------------------- | :---------------- |
+| `run()`    | Start the run (needed only if created explicitly)                                   | `start_dh_run`    |
+| `wait()`   | Block until the run reaches a terminal state                                        | `wait_dh_run`     |
+| `stop()`   | Interrupt the run                                                                   | `stop_dh_run`     |
+| `resume()` | Resume a previously stopped run                                                     | `resume_dh_run`   |
+| `logs()`   | Get run logs as `list[Log]`; each `Log.text` is the decoded human-readable content. | `get_dh_run_logs` |
 
 `wait(log_info=True)` streams progress info while blocking.
+
+`get_dh_run_logs` returns the concatenated human-readable log text (the `Log.text`
+of every log entry) — this is the container execution output / traceback, ready
+for analysis.
 
 ### 5.3 Metric methods
 
@@ -381,6 +385,31 @@ list_dh_runs(project="my-project",
              state="COMPLETED")
 ```
 
+### 6.6 Diagnose a failed run and self-correct
+
+When a run may have failed, diagnose it and read the human-readable logs
+(`Log.text`) to drive an automatic fix.
+
+```python
+run = dh.get_run("<id>", project="my-project")
+run.refresh()
+if run.status.state in ("ERROR", "FAILED", "ABORTED"):
+    for log in run.logs():
+        print(log.text)          # decoded human-readable traceback
+    # → identify the cause, correct the function / requirements, re-build, rerun
+```
+
+Agent-tool equivalent:
+
+```
+get_dh_run_logs(project="my-project", run_id="<id>")
+# → human-readable traceback and stdout/stderr
+# inspect logs, then:
+update_dh_function(...)                 # or new_dh_python_function(...)
+run_dh_python_build(project_name="my-project", name="my-fn")   # wait until COMPLETED
+run_dh_python_job(project_name="my-project", name="my-fn")
+```
+
 ---
 
 ## 7. Operational Guidance for the Agent
@@ -399,11 +428,12 @@ list_dh_runs(project="my-project",
 - **Long executions** — after firing an action, either pass `wait=True` at
   invocation time or call `wait_dh_run` explicitly. Use `refresh_dh_run` to
   poll state without blocking.
-- **Handling Failed Runs (Logs $\rightarrow$ Fix $\rightarrow$ Rerun)** — when a run ends in an `ERROR`
-  or `FAILED` state, do not abandon or guess: call `get_dh_run_logs(project, run_id)`
-  to fetch the execution traceback. Identify the error (missing dependency, handler bug,
-  wrong input parameter), update the function or task definition, re-build if needed,
-  and rerun.
+- **Handling Failed Runs (Logs $\rightarrow$ Fix $\rightarrow$ Rerun)** — when a run ends in an
+  `ERROR` / `FAILED` / `ABORTED` state, do not abandon or guess: call
+  `get_dh_run_logs(project, run_id)` to fetch the execution traceback. Read the logs,
+  identify the root cause (missing dependency, handler bug, wrong input parameter,
+  build failure), correct the function code or requirements yourself, re-build
+  with `wait=True` until `COMPLETED` if needed, and rerun the job.
 - **Outputs vs results** — outputs are DigitalHub entities (Dataitem, Artifact,
   Model). Results are primitives. Pick the correct accessor.
 - **Invoke** — only meaningful for serve runs. The default HTTP method is POST

@@ -85,7 +85,7 @@ This guide maps common DigitalHub SDK runtime errors and exceptions to their roo
 - **Problem**: A build run or job run finishes in an `ERROR`, `FAILED`, or aborted state.
 - **Protocol**:
   1. **Fetch Failure Logs Immediately**:
-     Call `get_dh_run_logs(project="<project>", run_id="<failed-run-id>")`.
+     Call `get_dh_run_logs(project="<project>", run_id="<failed-run-id>")` to retrieve the human-readable container execution logs (decoded `Log.text` traceback).
   2. **Diagnose Root Cause from Logs**:
      - _Traceback error in user code_: Identify line number and exception (e.g. `KeyError`, `ValueError`, bad type).
      - _Missing package_: Identify missing import name.
@@ -96,7 +96,7 @@ This guide maps common DigitalHub SDK runtime errors and exceptions to their roo
   4. **Re-Build (if dependencies or code changed)**:
      - Run `run_dh_python_build` (or `build_dh_function`) and block with `wait=True` until `status.state == 'COMPLETED'`.
   5. **Re-Execute Job**:
-     - Re-trigger `run_dh_python_job` (or `job_dh_function`) with the corrected parameters and verify successful execution.
+     - Re-trigger `run_dh_python_job` (or `job_dh_function`) with the corrected parameters.
 
 ---
 

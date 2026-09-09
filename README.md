@@ -13,35 +13,6 @@ Explore the full platform documentation at the [link](https://scc-digitalhub.git
 
 The Agent employs the **Open Knowledge Format (OKF)** to maintain modular, versioned technical documentation and SDK reference specifications outside of the static system prompt. This drastically reduces prompt token size, avoids context degradation, and allows the agent to dynamically look up SDK parameters and conventions on demand.
 
-```
-├── agent.py               # Agent factory (LLM + tools + middleware)
-├── graph.py               # LangGraph entry point
-├── main.py                # CLI runner
-├── prompts.py             # Lean behavioral system prompt
-├── settings.py            # Environment variable loading
-├── knowledge/             # OKF Knowledge Base (YAML Frontmatter + Markdown)
-│   ├── index.md           # Master catalog & routing
-│   ├── entities/
-│   │   ├── project.md     # Project entity & SDK specifications
-│   │   └── dataitem.md    # DataItem entity & storage guide
-│   ├── runtimes/
-│   │   └── python_function.md # Python runtime, @handler guide, build & runs
-│   ├── workflows/
-│   │   └── recipes.md     # End-to-end multi-step workflow recipes
-│   ├── troubleshooting/   # SDK error diagnosis & remediation guides
-│   │   └── sdk_errors.md
-│   └── governance/        # Platform standards & naming conventions
-│       └── standards.md
-├── tools/
-│   ├── knowledge_tools.py # OKF tools (list_knowledge_topics, get_knowledge_doc, search_knowledge)
-│   ├── project_tools.py   # DigitalHub project management tools
-│   ├── dataitem_tools.py  # DigitalHub dataitem management tools
-│   └── function_tools.py  # DigitalHub function (python runtime) tools
-├── langgraph.json         # LangGraph configuration
-├── requirements.txt       # Python dependencies
-└── .env.example           # Environment variable template
-```
-
 ---
 
 ## Prerequisites & Installation

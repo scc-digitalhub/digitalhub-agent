@@ -1,7 +1,7 @@
 ---
 type: entity_specification
 entity: secret
-version: "0.15"
+version: "0.16"
 tags: [secret, credentials, kubernetes, security, key_value, crud, io]
 tools:
   - new_dh_secret

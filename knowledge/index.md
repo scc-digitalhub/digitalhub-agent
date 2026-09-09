@@ -127,12 +127,6 @@ topics:
     path: "entities/secret.md"
     tags: [secret, credentials, kubernetes, security, key_value, crud, io]
     summary: "Secret entity CRUD (single kind), project-scoped key/value credentials backed by Kubernetes Secret Manager, metadata-only export, and set_secret_value/read_secret_value I/O methods."
-  - id: "recipes"
-    type: "workflow_recipes"
-    title: "DigitalHub End-to-End Workflow Recipes"
-    path: "workflows/recipes.md"
-    tags: [recipes, pipelines, e2e, mlops, dataops, workflows]
-    summary: "Step-by-step playbooks for data ingestion, ML model training pipelines, and real-time function serving."
   - id: "troubleshooting"
     type: "troubleshooting_guide"
     title: "DigitalHub SDK Troubleshooting & Error Recovery Guide"
@@ -166,7 +160,6 @@ Welcome to the DigitalHub Open Knowledge Format (OKF) Knowledge Base. This knowl
 | **`artifact`**        | `Artifact`       | Entity Specification  | Binary/file artifacts: register-vs-log, generic `artifact` kind spec (`path`), CRUD, and I/O methods (`as_file`, `download`, `upload`).                                   |
 | **`model`**           | `Model`          | Entity Specification  | ML models: generic + `mlflow`/`sklearn`/`huggingface` kinds, framework-specific log helpers, I/O methods, and metrics tracking (`log_metric`, `log_metrics`).             |
 | **`secret`**          | `Secret`         | Entity Specification  | Project-scoped key/value credentials (Kubernetes Secret Manager), CRUD, metadata-only YAML export, and `set_secret_value`/`read_secret_value` I/O.                        |
-| **`recipes`**         | `Workflows`      | Workflow Recipes      | Complete end-to-end recipes for multi-step data engineering and MLOps pipelines.                                                                                          |
 | **`troubleshooting`** | `Error Recovery` | Troubleshooting Guide | SDK exception recovery, configuration debugging, and self-healing recommendations.                                                                                        |
 | **`governance`**      | `Standards`      | Governance Standard   | Naming conventions, mandatory label schemas, and security standards.                                                                                                      |
 

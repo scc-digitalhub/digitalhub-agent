@@ -15,15 +15,16 @@ This document defines platform standards for resource naming, metadata labeling,
 ## 1. Resource Naming Conventions
 
 All resource names in DigitalHub must adhere to lowercase alphanumeric kebab-case:
+
 - **Valid characters**: `[a-z0-9-]` (lowercase letters, numbers, hyphens).
 - **Invalid characters**: Uppercase letters, spaces, underscores, periods, and special symbols.
 
-| Entity | Pattern | Examples |
-| :--- | :--- | :--- |
-| **Project** | `<team>-<domain>` | `finance-analytics`, `ml-fraud-detection` |
-| **DataItem** | `<descriptor>-<type>` | `raw-transactions`, `cleaned-features-v1` |
-| **Function** | `<action>-<target>-fn` | `preprocess-transactions-fn`, `train-churn-model-fn` |
-| **Model** | `<target>-<algorithm>-model` | `churn-xgboost-model`, `sales-forecast-arima-model` |
+| Entity       | Pattern                      | Examples                                             |
+| :----------- | :--------------------------- | :--------------------------------------------------- |
+| **Project**  | `<team>-<domain>`            | `finance-analytics`, `ml-fraud-detection`            |
+| **DataItem** | `<descriptor>-<type>`        | `raw-transactions`, `cleaned-features-v1`            |
+| **Function** | `<action>-<target>-fn`       | `preprocess-transactions-fn`, `train-churn-model-fn` |
+| **Model**    | `<target>-<algorithm>-model` | `churn-xgboost-model`, `sales-forecast-arima-model`  |
 
 ---
 
@@ -52,6 +53,7 @@ labels = [
 ---
 
 ## 4. Cross-References
+
 - [Project Guide](../entities/project.md)
 - [DataItem Guide](../entities/dataitem.md)
-- [Python Function Guide](../runtimes/python_function.md)
+- [Python Function Guide](../runtimes/python.md)

@@ -1,7 +1,7 @@
 ---
 type: entity_specification
 entity: artifact
-version: "0.15"
+version: "0.16"
 tags: [artifact, files, binary, storage, upload, download, s3, crud, io]
 tools:
   - new_dh_artifact

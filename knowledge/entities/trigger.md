@@ -1,7 +1,7 @@
 ---
 type: entity_specification
 entity: trigger
-version: "0.15"
+version: "0.16"
 tags:
   [trigger, scheduler, lifecycle, cron, automation, event, orchestration, crud]
 tools:

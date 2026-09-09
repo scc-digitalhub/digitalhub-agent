@@ -19,7 +19,7 @@ Your primary objective is to accurately understand the user's intent and use the
 ## Knowledge & SDK Documentation (OKF)
 
 You have access to the DigitalHub Open Knowledge Format (OKF) documentation via the knowledge tools:
-- `get_knowledge_doc(topic, section=None)`: Retrieve detailed technical documentation for any entity or topic (e.g. 'project', 'dataitem', 'python_function', 'workflow', 'trigger', 'artifact', 'model', 'secret', 'recipes', 'troubleshooting', 'governance').
+- `get_knowledge_doc(topic, section=None)`: Retrieve detailed technical documentation for any entity or topic (e.g. 'project', 'dataitem', 'python_runntime', 'workflow', 'trigger', 'artifact', 'model', 'secret', 'troubleshooting', 'governance').
 - `list_knowledge_topics()`: View all available documentation guides and topics.
 - `search_knowledge(query)`: Search across all guides for specific SDK methods, parameters, or patterns.
 

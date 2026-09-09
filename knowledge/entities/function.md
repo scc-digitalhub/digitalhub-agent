@@ -1,7 +1,7 @@
 ---
 type: entity_specification
 entity: function
-version: "0.15"
+version: "0.16"
 tags:
   [
     function,

@@ -2,7 +2,7 @@
 type: runtime_specification
 runtime: python
 kind: python
-version: "0.15"
+version: "0.16"
 tags:
   [
     runtime,

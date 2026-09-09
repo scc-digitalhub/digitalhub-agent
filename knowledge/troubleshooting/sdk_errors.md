@@ -122,4 +122,3 @@ This guide maps common DigitalHub SDK runtime errors and exceptions to their roo
 - [Python Runtime Guide](../runtimes/python.md)
 - [Run Guide](../entities/run.md)
 - [Secret Guide](../entities/secret.md)
-- [Workflow Recipes](../workflows/recipes.md)

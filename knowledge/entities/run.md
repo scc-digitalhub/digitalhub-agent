@@ -1,7 +1,7 @@
 ---
 type: entity_specification
 entity: run
-version: "0.15"
+version: "0.16"
 tags: [run, execution, lifecycle, metrics, outputs, results, invoke, logs, crud]
 tools:
   - new_dh_run

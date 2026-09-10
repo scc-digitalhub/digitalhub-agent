@@ -75,3 +75,11 @@ Create a project called 'wine-mlflow-project', load dataset from 'https://raw.gi
 ```text
 Create a project called 'speech-intelligence'. Register a public audio artifact named 'sample_speech_audio' pointing to the public open audio file 'https://cdn-media.huggingface.co/speech_samples/sample1.flac'. Next, create a Python function named 'whisper_transcribe' that loads the open-access 'openai/whisper-tiny' model using Hugging Face Transformers pipeline (no token needed), transcribes the audio file, and logs audio metrics. Make sure the function specifies the necessary pip requirements (transformers, torch, soundfile, librosa). Build the function container, run the job to transcribe the audio, save the transcription output as a text artifact, and log the Whisper model into the project repository.
 ```
+
+---
+
+### Scenario 9: Data Validation with Frictionless (`frictionless`) - Natural Language
+
+```text
+Create a project named validation and register a table dataitem named data-invalid.csv pointing to https://raw.githubusercontent.com/scc-digitalhub/digitalhub-tutorials/refs/heads/main/s10-data-validation/data-invalid.csv. Create a Python function named validate-csv that accepts the data-invalid.csv dataitem as input, downloads or accesses the CSV file, and validates it using the Frictionless library. The function should generate a Frictionless validation report and save or log the report as an artifact. If the CSV is invalid, include the validation errors or issues reported by Frictionless in the output report.
+```

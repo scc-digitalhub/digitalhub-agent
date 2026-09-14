@@ -2,7 +2,7 @@ from agent import get_dh_agent
 
 def run_cli():
     print("DigitalHub Agent Initialized. Type your command below (or 'exit' to quit):\n")
-    agent = get_dh_agent()
+    agent = get_dh_agent(with_memory=True)
 
     while True:
         try:

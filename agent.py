@@ -22,9 +22,18 @@ def _on_tool_error(exc: Exception, request: ToolCallRequest) -> str:
     )
 
 
-def get_dh_agent(tools=None, model_name=None, base_url=None, api_key=None, system_prompt=None):
+def get_dh_agent(
+    tools=None,
+    model_name=None,
+    base_url=None,
+    api_key=None,
+    system_prompt=None,
+    with_memory=False,
+):
     """
     Build and return the DigitalHub Agent instance.
+    - with_memory=True: attaches MemorySaver for interactive CLI.
+    - with_memory=False: no checkpointer (for native LangGraph / langgraph dev).
     """
     active_tools = tools if tools is not None else ALL_TOOLS
     model = model_name or LLM_MODEL
@@ -41,13 +50,15 @@ def get_dh_agent(tools=None, model_name=None, base_url=None, api_key=None, syste
         api_key=key,
     )
     
-    memory = MemorySaver()
     error_middleware = ToolErrorMiddleware(on_error=_on_tool_error)
 
-    return create_agent(
-        model=llm,
-        tools=active_tools,
-        system_prompt=prompt,
-        checkpointer=memory,
-        middleware=[error_middleware]
-    )
+    agent_kwargs = {
+        "model": llm,
+        "tools": active_tools,
+        "system_prompt": prompt,
+        "middleware": [error_middleware],
+    }
+    if with_memory:
+        agent_kwargs["checkpointer"] = MemorySaver()
+
+    return create_agent(**agent_kwargs)

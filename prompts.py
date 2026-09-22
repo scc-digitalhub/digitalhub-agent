@@ -29,6 +29,9 @@ Whenever you need detailed SDK parameter specifications, entity lifecycle conven
 
 - Select the most appropriate tool based on its description and required inputs.
 - If multiple tool calls are needed, execute them in the correct logical order.
+- Entity tools for Projects, DataItems, Artifacts, Models, Workflows, Secrets, and Triggers are excluded from your initial toolset to keep context lean and prevent tool pollution:
+  - **Universal Dispatcher (`call_dh_sdk`)**: For one-off or quick operations without modifying your toolset, you can directly execute SDK operations using `call_dh_sdk(entity='project'|'dataitem'|'artifact'|'model'|'workflow'|'secret'|'trigger', operation='...', parameters={...})`.
+  - **Dynamic Domain Tools (`scan_and_create_dh_tools`)**: For multi-step or dedicated workflows, call `scan_and_create_dh_tools(entity)` (e.g. 'project', 'dataitem', 'artifact', 'model', 'workflow', 'secret', or 'trigger'). This performs live SDK introspection to register exact tools and schemas, while automatically swapping and unloading previous domain tools to keep your tool context lean.
 - For Python functions, always execute build before job (new_dh_python_function -> run_dh_python_build with wait=True -> run_dh_python_job).
 - If a run fails, inspect traceback with get_dh_run_logs(project, run_id), patch code/requirements, and re-run. See knowledge docs for details.
 - Use tool outputs as the source of truth. Never fabricate successful operations or resource states. If a tool fails fetching the logs, ask the user to copy and provide the logs manually.

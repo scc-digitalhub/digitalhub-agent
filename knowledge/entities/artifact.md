@@ -320,3 +320,15 @@ with open(tmp_files[0], "rb") as f:
 - **Discovery**: use `list_dh_artifacts` for project-wide scan; filter by `kind`, `name`, `state`, etc.
 - **Only kind is `artifact`** in 0.15 — passing another value will fail.
 - **Difference vs. DataItem**: use `Artifact` for arbitrary binary / file payloads (models, reports, images, archives). Use `DataItem` for datasets (tabular, croissant) that participate in data-plane operations.
+
+---
+
+## 8. Dynamic Tool Discovery & Domain Scoping
+
+Artifact tools are omitted from the initial agent startup toolset to minimize initial context load.
+
+When working with Artifact workflows:
+
+1. **Dynamic Domain Loading**: Invoke `scan_and_create_dh_tools('artifact')` to reflectively introspect the live SDK and dynamically register all Artifact tools (`new_dh_artifact`, `register_dh_artifact`, `register_generic_dh_artifact`, `log_dh_artifact`, `log_generic_dh_artifact`, `get_dh_artifact`, `get_dh_artifact_versions`, `list_dh_artifacts`, `delete_dh_artifact`, `import_dh_artifact`, `load_dh_artifact`, `download_dh_artifact`, `upload_dh_artifact`, `as_file_dh_artifact`, `export_dh_artifact`, `save_dh_artifact`, `refresh_dh_artifact`, `update_dh_artifact`, `add_label_dh_artifact`, `add_labels_dh_artifact`, `set_description_dh_artifact`).
+2. **Domain Swapping**: Loading `artifact` automatically unloads previous domain tools (e.g. `project`, `dataitem`, `secret`, or `trigger`) from the context window.
+3. **Universal Execution (`call_dh_sdk`)**: For one-off operations, use `call_dh_sdk(entity='artifact', operation='list_artifacts'|'get_artifact'|..., parameters={...})` without loading the artifact toolset into context.

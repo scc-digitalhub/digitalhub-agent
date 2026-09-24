@@ -373,3 +373,26 @@ get_dh_run_output(project="my-project", run_id="<id>", output_name="result")
 - **Runtime docs** — for each kind, the source of truth for spec fields,
   task/run parameters, and entity-methods lives in the runtime page (e.g.
   [python](../runtimes/python.md)).
+
+---
+
+## 10. Dynamic Tool Discovery & Domain Scoping
+
+Function entity tools are excluded from the initial startup toolset to prevent tool context creep and keep agent execution lean.
+
+### Activation Mechanisms
+
+1. **Dynamic Toolset Registration (`scan_and_create_dh_tools`)**:
+   - Call `scan_and_create_dh_tools('function')` to dynamically reflect on `dh.*function*` and the `Function` class methods.
+   - Instantiates 23 typed tools (`new_dh_function`, `run_dh_function`, task tools, trigger tools, etc.) into the active context.
+   - Automatically unloads any previously active domain tools to keep context usage strictly bounded.
+
+2. **Universal Dispatcher (`call_dh_sdk`)**:
+   - For quick one-off operations without modifying your toolset:
+     ```python
+     call_dh_sdk(
+         entity="function",
+         operation="list_functions",
+         parameters={"project": "my-project"}
+     )
+     ```

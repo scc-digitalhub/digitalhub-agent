@@ -64,7 +64,13 @@ def _build_dynamic_pydantic_schema(
 
         resolved = _resolve_type_annotation(param.annotation)
         default_val = ... if param.default == inspect.Parameter.empty else param.default
-        fields[param_name] = (resolved, default_val)
+        if param_name == "model_config":
+            fields["v_model_config"] = (
+                resolved,
+                Field(default=default_val, alias="model_config", validation_alias="model_config"),
+            )
+        else:
+            fields[param_name] = (resolved, default_val)
 
     return create_model(schema_name, **fields)
 
@@ -78,6 +84,10 @@ def _normalize_kwargs_for_func(func: Callable, kwargs: Dict[str, Any], entity_na
     sig = inspect.signature(real_func)
     params = sig.parameters
     normalized = dict(kwargs)
+
+    # 0. Alias un-aliasing
+    if "v_model_config" in normalized and "model_config" not in normalized:
+        normalized["model_config"] = normalized.pop("v_model_config")
 
     # 1. Project mapping: if function expects 'project' and caller gave 'project_name'
     if "project" in params and "project" not in normalized and "project_name" in normalized:
@@ -165,6 +175,26 @@ def _normalize_kwargs_for_func(func: Callable, kwargs: Dict[str, Any], entity_na
                 if "labels" in normalized:
                     wf_obj.add_labels(normalized.pop("labels"))
                 normalized["entity"] = wf_obj
+        elif ent == "function":
+            fn_name = normalized.pop("name", normalized.pop("identifier", None))
+            proj = normalized.pop("project", normalized.pop("project_name", None))
+            if fn_name and proj:
+                fn_obj = dh.get_function(fn_name, project=proj)
+                if "description" in normalized:
+                    fn_obj.set_description(normalized.pop("description"))
+                if "labels" in normalized:
+                    fn_obj.add_labels(normalized.pop("labels"))
+                normalized["entity"] = fn_obj
+        elif ent == "run":
+            r_id = normalized.pop("run_id", normalized.pop("identifier", normalized.pop("name", None)))
+            proj = normalized.pop("project", normalized.pop("project_name", None))
+            if r_id and proj:
+                r_obj = dh.get_run(r_id, project=proj)
+                if "description" in normalized:
+                    r_obj.set_description(normalized.pop("description"))
+                if "labels" in normalized:
+                    r_obj.add_labels(normalized.pop("labels"))
+                normalized["entity"] = r_obj
 
     # Filter accepted arguments if function does not accept variable keyword arguments
     has_var_kw = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values())
@@ -300,10 +330,20 @@ def _introspect_sdk_for_entity(entity: str) -> List[BaseTool]:
     generated_tools: List[BaseTool] = []
 
     # 1. Introspect Top-Level SDK Functions
-    top_candidates = [
-        k for k in dir(dh)
-        if not k.startswith("_") and (f"_{entity_lower}" in k.lower() or f"_{entity_lower}s" in k.lower())
-    ]
+    if entity_lower == "model":
+        top_candidates = [
+            k for k in dir(dh)
+            if not k.startswith("_") and (
+                f"_{entity_lower}" in k.lower()
+                or f"_{entity_lower}s" in k.lower()
+                or k in ("log_mlflow", "log_sklearn", "log_huggingface", "register_mlflow", "register_sklearn", "register_huggingface")
+            )
+        ]
+    else:
+        top_candidates = [
+            k for k in dir(dh)
+            if not k.startswith("_") and (f"_{entity_lower}" in k.lower() or f"_{entity_lower}s" in k.lower())
+        ]
 
     for fn_name in sorted(top_candidates):
         raw_fn = getattr(dh, fn_name, None)
@@ -316,7 +356,11 @@ def _introspect_sdk_for_entity(entity: str) -> List[BaseTool]:
         short_doc = doc.split("\n\n")[0].replace("\n", " ").strip()
 
         # Format tool name: e.g. new_project -> new_dh_project, list_projects -> list_dh_projects
-        if f"_{entity_lower}s" in fn_name:
+        if fn_name.startswith("log_") and fn_name in ("log_mlflow", "log_sklearn", "log_huggingface"):
+            tool_name = f"log_dh_{fn_name.replace('log_', '')}_model"
+        elif fn_name.startswith("register_") and fn_name in ("register_mlflow", "register_sklearn", "register_huggingface"):
+            tool_name = f"register_dh_{fn_name.replace('register_', '')}_model"
+        elif f"_{entity_lower}s" in fn_name:
             tool_name = fn_name.replace(f"_{entity_lower}s", f"_dh_{entity_lower}s")
         else:
             tool_name = fn_name.replace(f"_{entity_lower}", f"_dh_{entity_lower}")
@@ -328,9 +372,12 @@ def _introspect_sdk_for_entity(entity: str) -> List[BaseTool]:
             skip.add("entity")
             if entity_lower == "project":
                 injected["name"] = (str, ...)
-            elif entity_lower in ("dataitem", "secret", "trigger", "artifact", "model", "workflow"):
+            elif entity_lower in ("dataitem", "secret", "trigger", "artifact", "model", "workflow", "function"):
                 injected["project_name"] = (str, ...)
                 injected["name"] = (str, ...)
+            elif entity_lower == "run":
+                injected["project"] = (str, ...)
+                injected["run_id"] = (str, ...)
             injected["description"] = (Optional[str], None)
             injected["labels"] = (Optional[List[str]], None)
 
@@ -404,12 +451,45 @@ def _introspect_sdk_for_entity(entity: str) -> List[BaseTool]:
             "run", "new_task", "get_task", "delete_task", "list_task", "update_task",
             "trigger", "get_trigger", "list_triggers",
         ]
+    elif entity_lower == "function":
+        try:
+            from digitalhub.entities.function._base.entity import Function as entity_class
+        except Exception:
+            pass
+        target_methods = [
+            "export", "save", "refresh", "add_label", "add_labels", "set_description",
+            "run", "new_task", "get_task", "delete_task", "list_task", "update_task",
+            "trigger", "get_trigger", "list_triggers",
+        ]
+    elif entity_lower == "run":
+        try:
+            from digitalhub.entities.run._base.entity import Run as entity_class
+        except Exception:
+            pass
+        target_methods = [
+            "run", "wait", "stop", "resume", "log_metric", "log_metrics",
+            "save", "refresh", "export", "add_label", "add_labels", "set_description",
+            "output", "outputs", "result", "results", "invoke",
+        ]
     else:
         target_methods = []
 
     if entity_class:
         for m_name in target_methods:
             raw_method = getattr(entity_class, m_name, None)
+            if not raw_method and entity_lower == "run":
+                try:
+                    from digitalhub_runtime_python.entities.run._base.entity import RunBaseRun
+                    raw_method = getattr(RunBaseRun, m_name, None)
+                except Exception:
+                    pass
+                if not raw_method:
+                    try:
+                        from digitalhub_runtime_python.entities.run.python_serve.entity import RunPythonRunServe
+                        raw_method = getattr(RunPythonRunServe, m_name, None)
+                    except Exception:
+                        pass
+
             if not callable(raw_method):
                 continue
 
@@ -419,7 +499,17 @@ def _introspect_sdk_for_entity(entity: str) -> List[BaseTool]:
             short_doc = doc.split("\n\n")[0].replace("\n", " ").strip()
 
             # Tool name: e.g. export_dh_project, download_dh_dataitem, read_dh_secret_value, stop_dh_trigger, log_dh_model_metric
-            if m_name == "search_entity":
+            if m_name == "output" and entity_lower == "run":
+                tool_name = "get_dh_run_output"
+            elif m_name == "outputs" and entity_lower == "run":
+                tool_name = "get_dh_run_outputs"
+            elif m_name == "result" and entity_lower == "run":
+                tool_name = "get_dh_run_result"
+            elif m_name == "results" and entity_lower == "run":
+                tool_name = "get_dh_run_results"
+            elif m_name == "invoke" and entity_lower == "run":
+                tool_name = "invoke_dh_run_service"
+            elif m_name == "search_entity":
                 tool_name = "search_dh_project_entities"
             elif m_name == "read_secret_value":
                 tool_name = "read_dh_secret_value"
@@ -427,27 +517,40 @@ def _introspect_sdk_for_entity(entity: str) -> List[BaseTool]:
                 tool_name = "set_dh_secret_value"
             elif m_name == "stop" and entity_lower == "trigger":
                 tool_name = "stop_dh_trigger"
-            elif m_name == "log_metric":
+            elif m_name == "stop" and entity_lower == "run":
+                tool_name = "stop_dh_run"
+            elif m_name == "run" and entity_lower == "run":
+                tool_name = "start_dh_run"
+            elif m_name == "logs" and entity_lower == "run":
+                tool_name = "get_dh_run_logs"
+            elif m_name == "log_metric" and entity_lower == "model":
                 tool_name = "log_dh_model_metric"
-            elif m_name == "log_metrics":
+            elif m_name == "log_metrics" and entity_lower == "model":
                 tool_name = "log_dh_model_metrics"
+            elif m_name == "log_metric" and entity_lower == "run":
+                tool_name = "log_dh_run_metric"
+            elif m_name == "log_metrics" and entity_lower == "run":
+                tool_name = "log_dh_run_metrics"
             elif m_name in ("new_task", "get_task", "delete_task", "update_task"):
                 tool_name = f"{m_name.replace('_task', '')}_dh_{entity_lower}_task"
             elif m_name == "list_task":
                 tool_name = f"list_dh_{entity_lower}_tasks"
-            elif m_name == "trigger" and entity_lower == "workflow":
-                tool_name = "trigger_dh_workflow"
-            elif m_name == "get_trigger" and entity_lower == "workflow":
-                tool_name = "get_dh_workflow_trigger"
-            elif m_name == "list_triggers" and entity_lower == "workflow":
-                tool_name = "list_dh_workflow_triggers"
+            elif m_name == "trigger" and entity_lower in ("workflow", "function"):
+                tool_name = f"trigger_dh_{entity_lower}"
+            elif m_name == "get_trigger" and entity_lower in ("workflow", "function"):
+                tool_name = f"get_dh_{entity_lower}_trigger"
+            elif m_name == "list_triggers" and entity_lower in ("workflow", "function"):
+                tool_name = f"list_dh_{entity_lower}_triggers"
             else:
                 tool_name = f"{m_name}_dh_{entity_lower}"
 
-            # Injected params for locating entity: project requires project_name; others require project_name + name
+            # Injected params for locating entity: project requires project_name; run requires project + run_id; others require project_name + name
             injected_params: Dict[str, Tuple[Any, Any]] = {}
             if entity_lower == "project":
                 injected_params["project_name"] = (str, ...)
+            elif entity_lower == "run":
+                injected_params["project"] = (str, ...)
+                injected_params["run_id"] = (str, ...)
             else:
                 injected_params["project_name"] = (str, ...)
                 injected_params["name"] = (str, ...)
@@ -460,7 +563,7 @@ def _introspect_sdk_for_entity(entity: str) -> List[BaseTool]:
             )
 
             def make_method_executor(target_method_name):
-                def _method_executor(project_name: str, **kwargs):
+                def _method_executor(project_name: str = None, **kwargs):
                     if entity_lower == "project":
                         obj = dh.get_project(project_name)
                     elif entity_lower == "dataitem":
@@ -481,6 +584,13 @@ def _introspect_sdk_for_entity(entity: str) -> List[BaseTool]:
                     elif entity_lower == "workflow":
                         w_name = kwargs.pop("name")
                         obj = dh.get_workflow(w_name, project=project_name)
+                    elif entity_lower == "function":
+                        fn_name = kwargs.pop("name")
+                        obj = dh.get_function(fn_name, project=project_name)
+                    elif entity_lower == "run":
+                        r_id = kwargs.pop("run_id", kwargs.pop("identifier", kwargs.pop("name", None)))
+                        proj = kwargs.pop("project", project_name)
+                        obj = dh.get_run(r_id, project=proj)
                     else:
                         raise ValueError(f"Unsupported entity: {entity_lower}")
 
@@ -504,6 +614,10 @@ def _introspect_sdk_for_entity(entity: str) -> List[BaseTool]:
                             return dh.update_model(obj)
                         elif entity_lower == "workflow":
                             return dh.update_workflow(obj)
+                        elif entity_lower == "function":
+                            return dh.update_function(obj)
+                        elif entity_lower == "run":
+                            return dh.update_run(obj)
 
                     # Return clean representations
                     if target_method_name == "search_entity" and isinstance(res, tuple):
@@ -521,30 +635,6 @@ def _introspect_sdk_for_entity(entity: str) -> List[BaseTool]:
             )
             generated_tools.append(t)
 
-    # 3. Add convenience constructors for trigger, model, or workflow domain if available
-    if entity_lower == "trigger":
-        try:
-            from tools.entity.trigger_tools import new_dh_scheduler_trigger, new_dh_lifecycle_trigger
-            generated_tools.extend([new_dh_scheduler_trigger, new_dh_lifecycle_trigger])
-        except Exception:
-            pass
-    elif entity_lower == "model":
-        try:
-            from tools.entity.model_tools import (
-                log_dh_mlflow_model,
-                log_dh_sklearn_model,
-                log_dh_huggingface_model,
-            )
-            generated_tools.extend([log_dh_mlflow_model, log_dh_sklearn_model, log_dh_huggingface_model])
-        except Exception:
-            pass
-    elif entity_lower == "workflow":
-        try:
-            from tools.entity.workflow_tools import build_dh_hera_workflow, run_dh_hera_pipeline
-            generated_tools.extend([build_dh_hera_workflow, run_dh_hera_pipeline])
-        except Exception:
-            pass
-
     return generated_tools
 
 
@@ -552,7 +642,7 @@ def _introspect_sdk_for_entity(entity: str) -> List[BaseTool]:
 def scan_and_create_dh_tools(entity: str, swap_domain: bool = True) -> str:
     """
     Pure Introspection SDK Scanner & Dynamic Tool Generator with Domain Scoping.
-    Reflects directly on the DigitalHub SDK for the specified entity ('project', 'dataitem', 'secret', 'trigger', 'artifact', 'model', or 'workflow'),
+    Reflects directly on the DigitalHub SDK for the specified entity ('project', 'dataitem', 'secret', 'trigger', 'artifact', 'model', 'workflow', 'function', or 'run'),
     dynamically constructs fully-typed LangChain tools with exact Pydantic parameter schemas,
     and activates them in the runtime.
 
@@ -560,12 +650,12 @@ def scan_and_create_dh_tools(entity: str, swap_domain: bool = True) -> str:
     agent's active context to prevent tool creep and keep context usage lean.
 
     Parameters:
-    - entity: Entity to introspect and load ('project', 'dataitem', 'secret', 'trigger', 'artifact', 'model', or 'workflow').
+    - entity: Entity to introspect and load ('project', 'dataitem', 'secret', 'trigger', 'artifact', 'model', 'workflow', 'function', or 'run').
     - swap_domain: Whether to unload previous domain tools and swap to this domain (default: True).
     """
     entity_key = entity.lower().rstrip("s")
-    if entity_key not in {"project", "dataitem", "secret", "trigger", "artifact", "model", "workflow"}:
-        return f"Entity '{entity}' is not supported yet. Supported entities: 'project', 'dataitem', 'secret', 'trigger', 'artifact', 'model', 'workflow'."
+    if entity_key not in {"project", "dataitem", "secret", "trigger", "artifact", "model", "workflow", "function", "run"}:
+        return f"Entity '{entity}' is not supported yet. Supported entities: 'project', 'dataitem', 'secret', 'trigger', 'artifact', 'model', 'workflow', 'function', 'run'."
 
     # Perform pure introspection directly on live SDK
     tools = _introspect_sdk_for_entity(entity_key)
@@ -598,8 +688,8 @@ def call_dh_sdk(entity: str, operation: str, parameters: Optional[Dict[str, Any]
     Ideal for one-off operations where you want to keep the tool count completely static.
 
     Parameters:
-    - entity: Entity name ('project', 'dataitem', 'secret', 'trigger', 'artifact', 'model', 'workflow').
-    - operation: Operation name (e.g. 'new_project', 'get_secret', 'new_trigger', 'run_workflow', 'build_dh_hera_workflow').
+    - entity: Entity name ('project', 'dataitem', 'secret', 'trigger', 'artifact', 'model', 'workflow', 'function', 'run').
+    - operation: Operation name (e.g. 'new_project', 'get_secret', 'new_trigger', 'run_workflow', 'build_dh_hera_workflow', 'run_function', 'start_dh_run').
     - parameters: Dictionary of parameters to pass to the operation.
     """
     args = parameters or {}

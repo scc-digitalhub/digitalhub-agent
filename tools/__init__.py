@@ -1,8 +1,3 @@
-from .entity import (
-    ENTITY_TOOLS,
-    FUNCTION_TOOLS,
-    RUN_TOOLS,
-)
 from .runtime import (
     PYTHON_RUNTIME_TOOLS,
     RUNTIME_TOOLS,
@@ -20,17 +15,13 @@ from .utility import (
 
 ALL_TOOLS = (
     UTILITY_TOOLS
-    + ENTITY_TOOLS
-    + RUNTIME_TOOLS
+    + PYTHON_RUNTIME_TOOLS
 )
 
 __all__ = [
-    "ENTITY_TOOLS",
     "RUNTIME_TOOLS",
     "UTILITY_TOOLS",
     "ALL_TOOLS",
-    "FUNCTION_TOOLS",
-    "RUN_TOOLS",
     "PYTHON_RUNTIME_TOOLS",
     "KNOWLEDGE_TOOLS",
     "LOG_TOOLS",

@@ -57,6 +57,7 @@ def get_dh_agent(
         model=model,
         base_url=f"{url}/v1",
         api_key=key,
+        stream_usage=True,
     )
     
     error_middleware = ToolErrorMiddleware(on_error=_on_tool_error)

@@ -299,3 +299,15 @@ delete_dh_secret(identifier="openai-api-key", project="my-project",
 - **YAML export is metadata-only** — after `import_dh_secret`, you must pair the import with a `set_dh_secret_value` call to restore the sensitive value.
 - **Backend requirement** — secrets rely on Kubernetes Secret Manager; on non-Kubernetes deployments the SDK calls will fail with a backend error.
 - **Difference vs. other entities** — Secret has no `kinds` axis and no `path`/artifact-store surface. Do not confuse it with `Artifact` (binary files) or platform credentials for stores (S3/SQL/Git) which are configured via environment variables, not secret entities.
+
+---
+
+## 8. Dynamic Tool Discovery & Domain Scoping
+
+Secret tools are omitted from the initial agent startup toolset to minimize initial context load.
+
+When working with Secret workflows:
+
+1. **Dynamic Domain Loading**: Invoke `scan_and_create_dh_tools('secret')` to reflectively introspect the live SDK and dynamically register all Secret tools (`new_dh_secret`, `get_dh_secret`, `list_dh_secrets`, `delete_dh_secret`, `update_dh_secret`, `import_dh_secret`, `load_dh_secret`, `export_dh_secret`, `read_dh_secret_value`, `set_dh_secret_value`, `save_dh_secret`, `refresh_dh_secret`, `add_label_dh_secret`, `set_description_dh_secret`).
+2. **Domain Swapping**: Loading `secret` automatically unloads previous domain tools (e.g. `project` or `dataitem`) from the context window.
+3. **Universal Execution (`call_dh_sdk`)**: For one-off operations, use `call_dh_sdk(entity='secret', operation='get_secret'|'read_secret_value'|..., parameters={...})` without loading the secret toolset into context.

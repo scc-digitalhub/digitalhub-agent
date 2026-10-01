@@ -371,3 +371,15 @@ Equivalent agent tool sequence:
 - For non-hera kinds (future), use the generic `run_dh_workflow(action=...)`.
 - Workflow specs are immutable: to modify a pipeline, register a new version via `new_dh_workflow` with updated `code_src`/`handler`.
 - To retrieve pipeline results, treat the produced `Run` like any other DigitalHub run (`get_dh_run_output`, `get_dh_run_result`, etc.).
+
+---
+
+## 11. Dynamic Tool Discovery & Domain Scoping
+
+Workflow tools are omitted from the initial agent startup toolset to minimize initial context load.
+
+When working with Workflow orchestration:
+
+1. **Dynamic Domain Loading**: Invoke `scan_and_create_dh_tools('workflow')` to reflectively introspect the live SDK and dynamically register all Workflow tools (`new_dh_workflow`, `get_dh_workflow`, `get_dh_workflow_versions`, `list_dh_workflows`, `delete_dh_workflow`, `import_dh_workflow`, `load_dh_workflow`, `update_dh_workflow`, `export_dh_workflow`, `save_dh_workflow`, `refresh_dh_workflow`, `run_dh_workflow`, `build_dh_hera_workflow`, `run_dh_hera_pipeline`, `new_dh_workflow_task`, `get_dh_workflow_task`, `delete_dh_workflow_task`, `list_dh_workflow_tasks`, `update_dh_workflow_task`, `trigger_dh_workflow`, `get_dh_workflow_trigger`, `list_dh_workflow_triggers`, `add_label_dh_workflow`, `add_labels_dh_workflow`, `set_description_dh_workflow`).
+2. **Domain Swapping**: Loading `workflow` automatically unloads previous domain tools (e.g. `project`, `dataitem`, `artifact`, `model`, `secret`, or `trigger`) from the context window.
+3. **Universal Execution (`call_dh_sdk`)**: For one-off operations, use `call_dh_sdk(entity='workflow', operation='list_workflows'|'get_workflow'|..., parameters={...})` without loading the workflow toolset into context.

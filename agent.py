@@ -3,7 +3,7 @@ from langchain.agents.middleware import ToolErrorMiddleware, ToolCallRequest
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_openai import ChatOpenAI
 from settings import DEPLOYED_URL, LLM_MODEL, LLM_API_KEY
-from tools import ALL_TOOLS
+from tools import ALL_TOOLS, DYNAMIC_REGISTRY
 from prompts import SYSTEM_PROMPT
 
 
@@ -35,7 +35,16 @@ def get_dh_agent(
     - with_memory=True: attaches MemorySaver for interactive CLI.
     - with_memory=False: no checkpointer (for native LangGraph / langgraph dev).
     """
-    active_tools = tools if tools is not None else ALL_TOOLS
+    if tools is not None:
+        active_tools = list(tools)
+    else:
+        active_tools = list(ALL_TOOLS)
+        # Include any dynamic tools already generated
+        existing_dynamic = DYNAMIC_REGISTRY.get_all_tools()
+        for dt in existing_dynamic:
+            if not any(t.name == dt.name for t in active_tools):
+                active_tools.append(dt)
+
     model = model_name or LLM_MODEL
     url = base_url or DEPLOYED_URL
     key = api_key or LLM_API_KEY
@@ -48,6 +57,7 @@ def get_dh_agent(
         model=model,
         base_url=f"{url}/v1",
         api_key=key,
+        stream_usage=True,
     )
     
     error_middleware = ToolErrorMiddleware(on_error=_on_tool_error)
@@ -61,4 +71,7 @@ def get_dh_agent(
     if with_memory:
         agent_kwargs["checkpointer"] = MemorySaver()
 
-    return create_agent(**agent_kwargs)
+    agent = create_agent(**agent_kwargs)
+    DYNAMIC_REGISTRY.register_agent(agent)
+    return agent
+

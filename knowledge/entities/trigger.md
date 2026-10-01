@@ -325,3 +325,15 @@ dh.delete_trigger("etl-daily-nightly", project="my-project", delete_all_versions
 - **Stop vs delete**: prefer `stop_dh_trigger` to pause automation while keeping history; use `delete_dh_trigger` to permanently remove.
 - **Prefer wrappers**: use `new_dh_scheduler_trigger` and `new_dh_lifecycle_trigger` when the kind is known — they enforce the required kind-spec fields at call time.
 - **Discovery from parent entity**: to list all triggers attached to a specific function or workflow, use `list_dh_function_triggers` / `list_dh_workflow_triggers`. To scan the whole project, use `list_dh_triggers`.
+
+---
+
+## 10. Dynamic Tool Discovery & Domain Scoping
+
+Trigger tools are omitted from the initial agent startup toolset to minimize initial context load.
+
+When working with Trigger automation workflows:
+
+1. **Dynamic Domain Loading**: Invoke `scan_and_create_dh_tools('trigger')` to reflectively introspect the live SDK and dynamically register all Trigger tools (`new_dh_trigger`, `get_dh_trigger`, `list_dh_triggers`, `delete_dh_trigger`, `update_dh_trigger`, `import_dh_trigger`, `load_dh_trigger`, `export_dh_trigger`, `stop_dh_trigger`, `save_dh_trigger`, `refresh_dh_trigger`, `add_label_dh_trigger`, `set_description_dh_trigger`, `new_dh_scheduler_trigger`, `new_dh_lifecycle_trigger`).
+2. **Domain Swapping**: Loading `trigger` automatically unloads previous domain tools (e.g. `project`, `dataitem`, or `secret`) from the context window.
+3. **Universal Execution (`call_dh_sdk`)**: For one-off operations, use `call_dh_sdk(entity='trigger', operation='list_triggers'|'new_trigger'|..., parameters={...})` without loading the trigger toolset into context.

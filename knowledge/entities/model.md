@@ -457,3 +457,15 @@ tmp_files = mdl.as_file()
 - **Versioning**: use `get_dh_model_versions` for history; use `get_dh_model` with `entity_id` to pin a specific version.
 - **Difference vs. Artifact**: use `Model` for ML models — you get metric tracking (`log_metric`/`log_metrics`) and framework-typed specs. Use `Artifact` for generic binary payloads (reports, archives, images) with no framework semantics.
 - **Serving**: to expose a model for inference, pair it with the appropriate `modelserve` runtime (sklearnserve / mlflowserve / huggingfaceserve / vllmserve / kubeai) — those runtimes read a `Model` entity via its store key.
+
+---
+
+## 8. Dynamic Tool Discovery & Domain Scoping
+
+Model tools are omitted from the initial agent startup toolset to minimize initial context load.
+
+When working with Model workflows:
+
+1. **Dynamic Domain Loading**: Invoke `scan_and_create_dh_tools('model')` to reflectively introspect the live SDK and dynamically register all Model tools (`new_dh_model`, `register_dh_model`, `register_generic_dh_model`, `log_dh_model`, `log_generic_dh_model`, `log_dh_mlflow_model`, `log_dh_sklearn_model`, `log_dh_huggingface_model`, `get_dh_model`, `get_dh_model_versions`, `list_dh_models`, `delete_dh_model`, `import_dh_model`, `load_dh_model`, `download_dh_model`, `upload_dh_model`, `as_file_dh_model`, `export_dh_model`, `save_dh_model`, `refresh_dh_model`, `update_dh_model`, `add_label_dh_model`, `add_labels_dh_model`, `set_description_dh_model`, `log_dh_model_metric`, `log_dh_model_metrics`).
+2. **Domain Swapping**: Loading `model` automatically unloads previous domain tools (e.g. `project`, `dataitem`, `artifact`, `secret`, or `trigger`) from the context window.
+3. **Universal Execution (`call_dh_sdk`)**: For one-off operations, use `call_dh_sdk(entity='model', operation='list_models'|'get_model'|..., parameters={...})` without loading the model toolset into context.

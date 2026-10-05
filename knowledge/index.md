@@ -62,6 +62,25 @@ topics:
         nuclio,
       ]
     summary: "Python runtime spec (kind='python'): @handler decorator, reserved arguments, function spec fields (python_version, code_src, handler, requirements, base_image, init_function), and job/serve/build action parameters (task + run) with local-vs-remote execution."
+  - id: "container"
+    type: "runtime_specification"
+    title: "DigitalHub Container Runtime & Workload Guide"
+    path: "runtimes/container.md"
+    tags:
+      [
+        runtime,
+        container,
+        job,
+        serve,
+        build,
+        docker,
+        kubernetes,
+        images,
+        replicas,
+        service,
+        instructions,
+      ]
+    summary: "Container runtime spec (kind='container'): function spec fields (image, base_image, command, image_pull_policy, ...), and job/serve/build action parameters (task + run) on Kubernetes."
   - id: "workflow"
     type: "entity_specification"
     title: "DigitalHub Workflow Entity & Hera Pipeline Guide"
@@ -155,6 +174,7 @@ Welcome to the DigitalHub Open Knowledge Format (OKF) Knowledge Base. This knowl
 | **`function`**        | `Function`       | Entity Specification  | Function entity CRUD, generic `run()`, tasks and triggers, and the kinds table (`python`, `dbt`, `container`, `modelserve`, `flower`, ...) linking to each runtime.       |
 | **`run`**             | `Run`            | Entity Specification  | Execution entity: CRUD, lifecycle (`wait`/`stop`/`resume`/`logs`), metrics, outputs/results, and `invoke` for served endpoints — the entity produced by `Function.run()`. |
 | **`python`**          | Python runtime   | Runtime Specification | Python runtime (kind `python`): `@handler` decorator, function spec (`python_version`, `code_src`, `handler`, `requirements`, ...), and `job`/`serve`/`build` actions.    |
+| **`container`**       | Container runtime| Runtime Specification | Container runtime (kind `container`): custom Docker images, command execution, `build` action (Dockerfile generation), `serve` action (Kubernetes service/replicas/invoke), and `job` action. |
 | **`workflow`**        | `Workflow`       | Entity Specification  | DAG-based pipeline orchestration, Hera runtime `build`/`pipeline` actions, pipeline DSL (`step`, `DAG`), tasks and triggers.                                              |
 | **`trigger`**         | `Trigger`        | Entity Specification  | Scheduler (Quartz cron) and lifecycle (event-driven) triggers, CRUD, `stop()`, template/inputs, and creation from functions/workflows.                                    |
 | **`artifact`**        | `Artifact`       | Entity Specification  | Binary/file artifacts: register-vs-log, generic `artifact` kind spec (`path`), CRUD, and I/O methods (`as_file`, `download`, `upload`).                                   |

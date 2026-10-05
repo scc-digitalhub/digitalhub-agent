@@ -47,7 +47,7 @@ transformation, etc. This document covers only the **entity-level** surface
 (CRUD, generic methods, tasks, triggers, kinds enumeration). For runtime- and
 action-specific parameters (e.g. `job`/`serve`/`build` for `kind='python'`),
 see the corresponding runtime doc — for example the [python](../runtimes/python.md)
-runtime guide.
+runtime guide or the [container](../runtimes/container.md) runtime guide.
 
 ---
 
@@ -95,7 +95,7 @@ schemas, executed by the corresponding runtime.
 | `guardrail`     | Python — LLM safety guardrail  | `digitalhub-runtime-python` (guardrail)     | `serve`, `build`                                                               |
 | `openinference` | Python — OpenInference tracing | `digitalhub-runtime-python` (openinference) | `serve`, `build`                                                               |
 | `dbt`           | DBT transformations            | `digitalhub-runtime-dbt`                    | `transform`                                                                    |
-| `container`     | Arbitrary container workloads  | `digitalhub-runtime-container`              | `job`, `serve`, `build`                                                        |
+| [`container`](../runtimes/container.md) | Arbitrary container workloads  | `digitalhub-runtime-container`              | `job`, `serve`, `build`                                                        |
 | `modelserve`    | Model-serving runtimes         | `digitalhub-runtime-modelserve`             | `serve` (sklearnserve / mlflowserve / huggingfaceserve / vllmserve / kubeai)   |
 | `flower`        | Federated learning (Flower)    | `digitalhub-runtime-flower`                 | `flower-app-train`, `flower-client-build/deploy`, `flower-server-build/deploy` |
 

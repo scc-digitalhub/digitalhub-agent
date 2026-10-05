@@ -38,17 +38,22 @@ def introspect_sdk_for_runtime(runtime: str) -> List[BaseTool]:
     kind_name = rt_clean
     run_builders: Dict[str, Any] = {}
 
-    for attr in dir(mod):
-        obj = getattr(mod, attr)
-        if isinstance(obj, type) and hasattr(obj, "ENTITY_TYPE") and hasattr(obj, "ENTITY_KIND"):
-            ent_type = getattr(obj, "ENTITY_TYPE", "")
-            ent_kind = getattr(obj, "ENTITY_KIND", "")
-            if ent_type in ("function", "workflow") and ent_kind == rt_clean:
-                target_entity_type = ent_type
-                kind_name = ent_kind
-            elif ent_type == "run" and ent_kind.startswith(f"{rt_clean}+") and ent_kind.endswith(":run"):
-                action = ent_kind.split(":run")[0].split("+")[1]
-                run_builders[action] = obj
+    modules_to_inspect = [mod]
+    if hasattr(mod, "entities"):
+        modules_to_inspect.append(mod.entities)
+
+    for m in modules_to_inspect:
+        for attr in dir(m):
+            obj = getattr(m, attr)
+            if isinstance(obj, type) and hasattr(obj, "ENTITY_TYPE") and hasattr(obj, "ENTITY_KIND"):
+                ent_type = getattr(obj, "ENTITY_TYPE", "")
+                ent_kind = getattr(obj, "ENTITY_KIND", "")
+                if ent_type in ("function", "workflow") and ent_kind == rt_clean:
+                    target_entity_type = ent_type
+                    kind_name = ent_kind
+                elif ent_type == "run" and ent_kind.startswith(f"{rt_clean}+") and ent_kind.endswith(":run"):
+                    action = ent_kind.split(":run")[0].split("+")[1]
+                    run_builders[action] = obj
 
     tools: List[BaseTool] = []
 
@@ -81,6 +86,37 @@ def introspect_sdk_for_runtime(runtime: str) -> List[BaseTool]:
 
         t_create = StructuredTool.from_function(
             func=_create_python_func,
+            name=create_tool_name,
+            description=f"Create a Function of kind='{kind_name}' with the {kind_name.title()}-runtime spec.",
+            args_schema=create_schema,
+        )
+        tools.append(t_create)
+    elif rt_clean == "container":
+        ImagePullPolicy = Literal["Always", "IfNotPresent", "Never"]
+        create_fields = {
+            "project": (str, ...),
+            "name": (str, ...),
+            "image": (Optional[str], None),
+            "base_image": (Optional[str], None),
+            "command": (Optional[str], None),
+            "image_pull_policy": (Optional[ImagePullPolicy], None),
+            "code_src": (Optional[str], None),
+            "code": (Optional[str], None),
+            "base64": (Optional[str], None),
+            "handler": (Optional[str], None),
+            "lang": (Optional[str], None),
+            "uuid": (Optional[str], None),
+            "description": (Optional[str], None),
+            "labels": (Optional[List[str]], None),
+            "embedded": (bool, False),
+        }
+        create_schema = create_model(f"{create_tool_name.title().replace('_', '')}Schema", **create_fields)
+
+        def _create_container_func(project: str, name: str, **kwargs):
+            return dh.new_function(project=project, name=name, kind=kind_name, **kwargs)
+
+        t_create = StructuredTool.from_function(
+            func=_create_container_func,
             name=create_tool_name,
             description=f"Create a Function of kind='{kind_name}' with the {kind_name.title()}-runtime spec.",
             args_schema=create_schema,
@@ -120,8 +156,14 @@ def introspect_sdk_for_runtime(runtime: str) -> List[BaseTool]:
             "wait": (bool, True),
             "log_info": (bool, True),
         }
-        if action == "job":
+        if rt_clean == "python" and action == "job":
             injected["local_execution"] = (bool, False)
+        elif rt_clean == "container":
+            if action in ("job", "serve"):
+                injected["auto_build"] = (bool, True)
+            elif action == "build":
+                injected["instructions"] = (Optional[List[str]], None)
+                skip.add("instructions")
 
         action_schema = build_dynamic_pydantic_schema(
             f"{tool_name.title().replace('_', '')}Schema",

@@ -17,4 +17,5 @@ SUPPORTED_ENTITIES: Set[str] = {
 
 SUPPORTED_RUNTIMES: Set[str] = {
     "python",
+    "container",
 }

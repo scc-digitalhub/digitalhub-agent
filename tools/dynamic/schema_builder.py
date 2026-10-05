@@ -66,7 +66,7 @@ def build_dynamic_pydantic_schema(
 
     skip = skip_params or set()
     for param_name, param in sig.parameters.items():
-        if param_name in skip or param_name.startswith("*"):
+        if param_name in skip or param_name in fields or param_name.startswith("*"):
             continue
         if param_name in {"setup_kwargs", "extensions", "config", "self"}:
             continue

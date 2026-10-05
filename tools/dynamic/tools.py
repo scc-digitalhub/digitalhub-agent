@@ -28,7 +28,7 @@ def scan_and_create_dh_tools(
 
     Parameters:
     - entity: Entity to introspect and load ('project', 'dataitem', 'secret', 'trigger', 'artifact', 'model', 'workflow', 'function', or 'run').
-    - runtime_name: Runtime to introspect and load ('python').
+    - runtime_name: Runtime to introspect and load ('python' or 'container').
     - swap_domain: Whether to unload previous domain tools and swap to this domain (default: True).
     """
     is_runtime = False
@@ -39,7 +39,7 @@ def scan_and_create_dh_tools(
         target = runtime_name.lower().replace("_runtime", "").replace("-", "_").rstrip("s")
     elif entity:
         raw_ent = entity.lower().replace("_runtime", "").replace("-", "_").rstrip("s")
-        if raw_ent in SUPPORTED_RUNTIMES or raw_ent.startswith("python"):
+        if raw_ent in SUPPORTED_RUNTIMES or raw_ent.startswith("python") or raw_ent.startswith("container"):
             is_runtime = True
             target = raw_ent
         elif raw_ent in SUPPORTED_ENTITIES:
@@ -100,7 +100,7 @@ def dispatch_dh_sdk(
     target_rt = runtime_name
     if not target_rt and entity:
         raw_ent = entity.lower().replace("_runtime", "").replace("-", "_").rstrip("s")
-        if raw_ent in SUPPORTED_RUNTIMES or raw_ent.startswith("python"):
+        if raw_ent in SUPPORTED_RUNTIMES or raw_ent.startswith("python") or raw_ent.startswith("container"):
             target_rt = raw_ent
 
     if not t and target_rt:
@@ -155,7 +155,7 @@ def call_dh_sdk(
 
     Parameters:
     - entity: Entity name ('project', 'dataitem', 'secret', 'trigger', 'artifact', 'model', 'workflow', 'function', 'run').
-    - runtime_name: Runtime name ('python').
+    - runtime_name: Runtime name ('python' or 'container').
     - operation: Operation name (e.g. 'new_project', 'run_dh_python_job', 'new_dh_python_function', etc.).
     - parameters: Dictionary of parameters to pass to the operation.
     """

@@ -5,4 +5,5 @@ python-dotenv
 pandas
 digitalhub==0.16.0b7
 digitalhub-runtime-python==0.16.0b4
+digitalhub-runtime-container==0.16.0b4
 digitalhub-runtime-hera==0.16.0b2

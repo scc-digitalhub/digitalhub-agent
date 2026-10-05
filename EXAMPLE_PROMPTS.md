@@ -83,3 +83,11 @@ Create a project called 'speech-intelligence'. Register a public audio artifact 
 ```text
 Create a project named validation and register a table dataitem named data-invalid.csv pointing to https://raw.githubusercontent.com/scc-digitalhub/digitalhub-tutorials/refs/heads/main/s10-data-validation/data-invalid.csv. Create a Python function named validate-csv that accepts the data-invalid.csv dataitem as input, downloads or accesses the CSV file, and validates it using the Frictionless library. The function should generate a Frictionless validation report and save or log the report as an artifact. If the CSV is invalid, include the validation errors or issues reported by Frictionless in the output report.
 ```
+
+---
+
+### Scenario 10: Text Extraction Service with Container Runtime (`container` & `python`) - Natural Language
+
+```text
+Create a project called 'rag-knowledge-base'. Create a container function named 'tika' with image='apache/tika:latest-full'. Run the function as a long-lived service with exposing service_ports=[{"port": 9998, "target_port": 9998}], and wait for it to be ready. Retrieve and inspect the deployed service URL from the run status. Create an artifact pointing to 'https://raw.githubusercontent.com/scc-digitalhub/digitalhub-tutorials/master/s7-rag/resources/document.pdf'. Create a Python function that extracts text from an artifact using an Apache Tika server running, saves the result as an HTML file, and logs the extracted file as a project artifact. Retrieve the resulting HTML artifact and verify its extracted text content.
+```

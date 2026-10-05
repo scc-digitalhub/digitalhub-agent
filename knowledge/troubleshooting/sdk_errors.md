@@ -97,6 +97,8 @@ This guide maps common DigitalHub SDK runtime errors and exceptions to their roo
      - Run `run_dh_python_build` (or `build_dh_function`) and block with `wait=True` until `status.state == 'COMPLETED'`.
   5. **Re-Execute Job**:
      - Re-trigger `run_dh_python_job` (or `job_dh_function`) with the corrected parameters.
+  6. **Retry Limit & User Escalation**:
+     - Attempt self-correction at most **twice (2 retries)**. If the failure persists or cannot be resolved, STOP tool execution immediately, present the failure and logs to the user, and ask how they would like to solve it.
 
 ---
 

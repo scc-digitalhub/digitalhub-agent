@@ -15,10 +15,11 @@ def _on_tool_error(exc: Exception, request: ToolCallRequest) -> str:
     entity_topic = clean_name.split("_")[0]
     return (
         f"SDK Exception in tool '{tool_name}': {exc}\n"
-        f"Self-Correction Guidance:\n"
+        f"Self-Correction & Escalation Guidance:\n"
         f"1. Check the entity specification: `get_knowledge_doc('{entity_topic}')`.\n"
         f"2. Consult the troubleshooting guide: `get_knowledge_doc('troubleshooting')` or `search_knowledge('{type(exc).__name__}')`.\n"
-        f"3. Verify parameter requirements before retrying."
+        f"3. Verify parameter requirements before retrying (maximum 2 retries allowed).\n"
+        f"4. STOPPING RULE: If you cannot resolve this issue after 1-2 attempts or if the error persists, STOP retrying immediately. Do not loop infinitely. Formulate a clear explanation of the problem for the user and ask how they would like to solve it."
     )
 
 

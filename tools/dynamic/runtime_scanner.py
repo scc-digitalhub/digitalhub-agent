@@ -38,6 +38,7 @@ def introspect_sdk_for_runtime(runtime: str) -> List[BaseTool]:
     kind_name = rt_clean
     run_builders: Dict[str, Any] = {}
 
+    target_builder = None
     modules_to_inspect = [mod]
     if hasattr(mod, "entities"):
         modules_to_inspect.append(mod.entities)
@@ -51,103 +52,75 @@ def introspect_sdk_for_runtime(runtime: str) -> List[BaseTool]:
                 if ent_type in ("function", "workflow") and ent_kind == rt_clean:
                     target_entity_type = ent_type
                     kind_name = ent_kind
+                    target_builder = obj
                 elif ent_type == "run" and ent_kind.startswith(f"{rt_clean}+") and ent_kind.endswith(":run"):
                     action = ent_kind.split(":run")[0].split("+")[1]
                     run_builders[action] = obj
 
     tools: List[BaseTool] = []
 
-    # 1. new_dh_<runtime>_<entity> tool
+    # 1. new_dh_<runtime>_<entity> tool (Autonomous Introspection)
     create_tool_name = f"new_dh_{kind_name}_{target_entity_type}"
-    if rt_clean == "python":
-        PythonVersion = Literal["PYTHON3_10", "PYTHON3_11", "PYTHON3_12", "PYTHON3_13", "PYTHON3_14"]
-        create_fields = {
-            "project": (str, ...),
-            "name": (str, ...),
-            "handler": (str, ...),
-            "python_version": (Optional[PythonVersion], None),
-            "code_src": (Optional[str], None),
-            "code": (Optional[str], None),
-            "base64": (Optional[str], None),
-            "init_function": (Optional[str], None),
-            "lang": (Optional[str], None),
-            "image": (Optional[str], None),
-            "base_image": (Optional[str], None),
-            "requirements": (Optional[List[str]], None),
-            "uuid": (Optional[str], None),
-            "description": (Optional[str], None),
-            "labels": (Optional[List[str]], None),
-            "embedded": (bool, False),
-        }
-        create_schema = create_model(f"{create_tool_name.title().replace('_', '')}Schema", **create_fields)
+    base_func = dh.new_workflow if target_entity_type == "workflow" else dh.new_function
+    base_doc = base_func.__doc__ or ""
+    spec_cls = getattr(target_builder, "ENTITY_SPEC_CLASS", None) if target_builder else None
+    spec_sig = inspect.signature(spec_cls.__init__) if spec_cls else None
+    spec_doc = (spec_cls.__init__.__doc__ or spec_cls.__doc__) if spec_cls else ""
+    create_doc = "\n\n".join([inspect.cleandoc(d) for d in [base_doc, spec_doc] if d and d.strip()])
 
-        def _create_python_func(project: str, name: str, **kwargs):
-            return dh.new_function(project=project, name=name, kind=kind_name, **kwargs)
+    base_injected: Dict[str, Any] = {
+        "project": (str, ...),
+        "name": (str, ...),
+        "code_src": (Optional[str], None),
+        "handler": (Optional[str], None),
+        "code": (Optional[str], None),
+        "base64": (Optional[str], None),
+        "description": (Optional[str], None),
+        "labels": (Optional[List[str]], None),
+        "embedded": (bool, False),
+    }
 
-        t_create = StructuredTool.from_function(
-            func=_create_python_func,
-            name=create_tool_name,
-            description=f"Create a Function of kind='{kind_name}' with the {kind_name.title()}-runtime spec.",
-            args_schema=create_schema,
+    if spec_sig:
+        create_schema = build_dynamic_pydantic_schema(
+            f"{create_tool_name.title().replace('_', '')}Schema",
+            spec_sig,
+            skip_params={"self", "kwargs", "args", "source"},
+            injected_params=base_injected,
+            docstring=create_doc,
         )
-        tools.append(t_create)
-    elif rt_clean == "container":
-        ImagePullPolicy = Literal["Always", "IfNotPresent", "Never"]
-        create_fields = {
-            "project": (str, ...),
-            "name": (str, ...),
-            "image": (Optional[str], None),
-            "base_image": (Optional[str], None),
-            "command": (Optional[str], None),
-            "image_pull_policy": (Optional[ImagePullPolicy], None),
-            "code_src": (Optional[str], None),
-            "code": (Optional[str], None),
-            "base64": (Optional[str], None),
-            "handler": (Optional[str], None),
-            "lang": (Optional[str], None),
-            "uuid": (Optional[str], None),
-            "description": (Optional[str], None),
-            "labels": (Optional[List[str]], None),
-            "embedded": (bool, False),
-        }
-        create_schema = create_model(f"{create_tool_name.title().replace('_', '')}Schema", **create_fields)
-
-        def _create_container_func(project: str, name: str, **kwargs):
-            return dh.new_function(project=project, name=name, kind=kind_name, **kwargs)
-
-        t_create = StructuredTool.from_function(
-            func=_create_container_func,
-            name=create_tool_name,
-            description=f"Create a Function of kind='{kind_name}' with the {kind_name.title()}-runtime spec.",
-            args_schema=create_schema,
-        )
-        tools.append(t_create)
     else:
-        def _create_generic_entity(project: str, name: str, **kwargs):
-            if target_entity_type == "workflow":
-                return dh.new_workflow(project=project, name=name, kind=kind_name, **kwargs)
-            return dh.new_function(project=project, name=name, kind=kind_name, **kwargs)
-
-        sig = inspect.signature(dh.new_workflow if target_entity_type == "workflow" else dh.new_function)
-        schema = build_dynamic_pydantic_schema(
+        sig = inspect.signature(base_func)
+        create_schema = build_dynamic_pydantic_schema(
             f"{create_tool_name.title().replace('_', '')}Schema",
             sig,
-            skip_params={"self", "kwargs", "kind"},
+            skip_params={"self", "kwargs", "args", "kind"},
             injected_params={"project": (str, ...), "name": (str, ...)},
+            docstring=base_doc,
         )
-        t_create = StructuredTool.from_function(
-            func=_create_generic_entity,
-            name=create_tool_name,
-            description=f"Create a {target_entity_type.title()} of kind='{kind_name}' with the {kind_name.title()}-runtime spec.",
-            args_schema=schema,
-        )
-        tools.append(t_create)
+
+    def _create_entity(project: str, name: str, **kwargs):
+        if target_entity_type == "workflow":
+            return dh.new_workflow(project=project, name=name, kind=kind_name, **kwargs)
+        return dh.new_function(project=project, name=name, kind=kind_name, **kwargs)
+
+    t_create = StructuredTool.from_function(
+        func=_create_entity,
+        name=create_tool_name,
+        description=f"Create a {target_entity_type.title()} of kind='{kind_name}' with the {kind_name.title()}-runtime spec.",
+        args_schema=create_schema,
+    )
+    tools.append(t_create)
 
     # 2. run_dh_<runtime>_<action> tools
+    ent_cls = getattr(target_builder, "ENTITY_CLASS", None) if target_builder else None
+    base_run_doc = getattr(ent_cls.run, "__doc__", "") if ent_cls and hasattr(ent_cls, "run") else ""
+
     for action, builder_cls in sorted(run_builders.items()):
         tool_name = f"run_dh_{kind_name}_{action}"
         spec_cls = getattr(builder_cls, "ENTITY_SPEC_CLASS", None)
         sig = inspect.signature(spec_cls.__init__) if spec_cls else None
+        spec_doc = (spec_cls.__init__.__doc__ or spec_cls.__doc__) if spec_cls else ""
+        action_doc = "\n\n".join([inspect.cleandoc(d) for d in [base_run_doc, spec_doc] if d and d.strip()])
 
         skip = {"self", "kwargs", "task", "function", "workflow", "source"}
         injected = {
@@ -165,12 +138,17 @@ def introspect_sdk_for_runtime(runtime: str) -> List[BaseTool]:
                 injected["instructions"] = (Optional[List[str]], None)
                 skip.add("instructions")
 
-        action_schema = build_dynamic_pydantic_schema(
-            f"{tool_name.title().replace('_', '')}Schema",
-            sig,
-            skip_params=skip,
-            injected_params=injected,
-        ) if sig else None
+        action_schema = (
+            build_dynamic_pydantic_schema(
+                f"{tool_name.title().replace('_', '')}Schema",
+                sig,
+                skip_params=skip,
+                injected_params=injected,
+                docstring=action_doc,
+            )
+            if sig
+            else None
+        )
 
         def make_executor(act=action, ent_type=target_entity_type):
             def _exec(project_name: str, name: str, **kwargs):

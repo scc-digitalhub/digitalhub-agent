@@ -3,6 +3,48 @@ Registry for dynamic tools and domain scoping lifecycle management.
 """
 from typing import Any, Dict, List, Optional
 from langchain_core.tools import BaseTool
+from langchain.agents.middleware import AgentMiddleware, ToolCallRequest, ModelRequest
+
+
+class DynamicToolsMiddleware(AgentMiddleware):
+    def __init__(self, registry: "DynamicToolRegistry"):
+        super().__init__()
+        self.registry = registry
+
+    def _enrich_model_request(self, request: ModelRequest) -> ModelRequest:
+        active_tools = self.registry.get_active_domain_tools()
+        if active_tools:
+            existing_tools = list(request.tools or [])
+            existing_names = {getattr(t, "name", "") for t in existing_tools}
+            new_tools = [t for t in active_tools if getattr(t, "name", "") not in existing_names]
+            if new_tools:
+                request = request.override(tools=existing_tools + new_tools)
+        return request
+
+    def _resolve_tool_request(self, request: ToolCallRequest) -> ToolCallRequest:
+        tool_name = (
+            request.tool_call.get("name")
+            if isinstance(request.tool_call, dict)
+            else getattr(request.tool_call, "name", "")
+        )
+        if not request.tool or not getattr(request.tool, "name", None):
+            dyn_tool = self.registry.get_tool(tool_name)
+            if dyn_tool:
+                request = request.override(tool=dyn_tool)
+        return request
+
+    def wrap_model_call(self, request: ModelRequest, handler):
+        return handler(self._enrich_model_request(request))
+
+    async def awrap_model_call(self, request: ModelRequest, handler):
+        return await handler(self._enrich_model_request(request))
+
+    def wrap_tool_call(self, request: ToolCallRequest, handler):
+        return handler(self._resolve_tool_request(request))
+
+    async def awrap_tool_call(self, request: ToolCallRequest, handler):
+        return await handler(self._resolve_tool_request(request))
+
 
 
 class DynamicToolRegistry:
@@ -17,6 +59,13 @@ class DynamicToolRegistry:
         self._domain_tools: Dict[str, Dict[str, BaseTool]] = {}
         self._active_domain: Optional[str] = None
         self._active_agents: List[Any] = []
+        self._middleware: Optional[DynamicToolsMiddleware] = None
+
+    def get_middleware(self) -> DynamicToolsMiddleware:
+        """Return the LangChain AgentMiddleware for this registry."""
+        if self._middleware is None:
+            self._middleware = DynamicToolsMiddleware(self)
+        return self._middleware
 
     def activate_domain(self, domain: str, tools: List[BaseTool], swap_domain: bool = True) -> None:
         """Activate tools for a domain and swap out previous domain tools if swap_domain=True."""

@@ -62,12 +62,13 @@ def get_dh_agent(
     )
     
     error_middleware = ToolErrorMiddleware(on_error=_on_tool_error)
+    dynamic_tools_middleware = DYNAMIC_REGISTRY.get_middleware()
 
     agent_kwargs = {
         "model": llm,
         "tools": active_tools,
         "system_prompt": prompt,
-        "middleware": [error_middleware],
+        "middleware": [dynamic_tools_middleware, error_middleware],
     }
     if with_memory:
         agent_kwargs["checkpointer"] = MemorySaver()

@@ -4,6 +4,7 @@
 
 import asyncio
 import json
+import os
 import uuid
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
@@ -27,6 +28,8 @@ from langchain_core.messages import (
 agent = get_dh_agent(with_memory=True)
 
 threads: Dict[str, Dict[str, Any]] = {}
+
+SSE_KEEPALIVE_SECONDS = float(os.getenv("SSE_KEEPALIVE_SECONDS", "10"))
 
 
 def serialize_message(msg: Any) -> Dict[str, Any]:
@@ -177,6 +180,17 @@ async def get_thread_state(request: Request) -> JSONResponse:
         return JSONResponse({"values": {"messages": []}, "error": str(e)})
 
 
+def describe_error(exc: BaseException) -> str:
+    """Include the underlying causes (e.g. DNS/proxy/TLS failures hidden behind 'Connection error.')."""
+    parts = []
+    seen = set()
+    while exc is not None and id(exc) not in seen:
+        seen.add(id(exc))
+        parts.append(f"{type(exc).__name__}: {exc}")
+        exc = exc.__cause__ or exc.__context__
+    return " <- ".join(parts)
+
+
 def sse_pack(event: str, data: Any) -> str:
     """Format standard Server-Sent Event (SSE) payload."""
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
@@ -220,12 +234,21 @@ async def stream_thread_run(request: Request) -> Response:
 
     project = extract_project(body)
     messages = parse_incoming_messages(body, project_name=project)
+    if not any(isinstance(m, (HumanMessage, AIMessage)) for m in messages):
+        return JSONResponse(
+            {
+                "error": "No user message found. Send {\"input\": {\"messages\": "
+                "[{\"role\": \"user\", \"content\": \"...\"}], \"project\": \"...\"}} "
+                "or {\"message\": \"...\"}."
+            },
+            status_code=400,
+        )
     config = {"configurable": {"thread_id": thread_id}}
 
-    async def event_generator() -> AsyncGenerator[str, None]:
+    async def produce(queue: "asyncio.Queue[Optional[str]]") -> None:
         try:
             run_id = f"run_{uuid.uuid4().hex[:12]}"
-            yield sse_pack("metadata", {"run_id": run_id, "thread_id": thread_id})
+            await queue.put(sse_pack("metadata", {"run_id": run_id, "thread_id": thread_id}))
 
             # Native non-blocking async streaming
             async for mode, chunk in agent.astream(
@@ -237,17 +260,36 @@ async def stream_thread_run(request: Request) -> Response:
                     msg_chunk, meta = chunk
                     if getattr(msg_chunk, "type", "") in ("system", "SystemMessage"):
                         continue
-                    yield sse_pack("messages", [serialize_message(msg_chunk), meta])
+                    await queue.put(sse_pack("messages", [serialize_message(msg_chunk), meta]))
 
                 elif mode == "updates" and isinstance(chunk, dict):
-                    yield sse_pack("updates", serialize_node_update(chunk))
+                    await queue.put(sse_pack("updates", serialize_node_update(chunk)))
 
-                await asyncio.sleep(0.005)
+            await queue.put(sse_pack("end", {"status": "success"}))
 
-            yield sse_pack("end", {"status": "success"})
-
+        except asyncio.CancelledError:
+            raise
         except Exception as exc:
-            yield sse_pack("error", {"error": str(exc)})
+            await queue.put(sse_pack("error", {"error": describe_error(exc)}))
+        finally:
+            await queue.put(None)
+
+    async def event_generator() -> AsyncGenerator[str, None]:
+        queue: "asyncio.Queue[Optional[str]]" = asyncio.Queue()
+        task = asyncio.create_task(produce(queue))
+        try:
+            while True:
+                try:
+                    item = await asyncio.wait_for(queue.get(), timeout=SSE_KEEPALIVE_SECONDS)
+                except asyncio.TimeoutError:
+                    # SSE comment: ignored by clients, keeps proxies from closing idle streams
+                    yield ": keepalive\n\n"
+                    continue
+                if item is None:
+                    break
+                yield item
+        finally:
+            task.cancel()
 
     return StreamingResponse(
         event_generator(),
@@ -260,7 +302,13 @@ async def stream_thread_run(request: Request) -> Response:
     )
 
 
+async def health(request: Request) -> JSONResponse:
+    """Liveness/readiness probe."""
+    return JSONResponse({"status": "ok"})
+
+
 routes = [
+    Route("/health", health, methods=["GET"]),
     Route("/threads", create_thread, methods=["POST"]),
     Route("/threads/{thread_id}/state", get_thread_state, methods=["GET"]),
     Route("/threads/{thread_id}/runs/stream", stream_thread_run, methods=["POST"]),
@@ -276,7 +324,11 @@ middleware = [
     )
 ]
 
-app = Starlette(debug=True, routes=routes, middleware=middleware)
+app = Starlette(
+    debug=os.getenv("DEBUG", "").lower() in ("1", "true", "yes"),
+    routes=routes,
+    middleware=middleware,
+)
 
 
 def main():
@@ -285,7 +337,10 @@ def main():
     parser = argparse.ArgumentParser(description="DigitalHub Agent API Server")
     parser.add_argument("--host", default="0.0.0.0", help="Host interface to bind to")
     parser.add_argument(
-        "--port", type=int, default=2024, help="Port to listen on (default: 2024)"
+        "--port",
+        type=int,
+        default=int(os.getenv("PORT", "2024")),
+        help="Port to listen on (default: $PORT or 2024)",
     )
     args = parser.parse_args()
 

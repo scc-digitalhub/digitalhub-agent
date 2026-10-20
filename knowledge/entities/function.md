@@ -308,7 +308,7 @@ fn = dh.new_function(
     python_version="PYTHON3_10",
 )
 
-# 2. Build container image (MANDATORY for Python runtime before job execution)
+# 2. Build container image (optional - jobs can also be run directly)
 fn.run(action="build", wait=True)
 
 # 3. Execute the job with inputs and parameters
@@ -329,7 +329,7 @@ Agent-tool equivalent:
 new_dh_function(project="my-project", name="my-fn", kind="python",
                 kwargs={"code_src": "handler.py", "handler": "main",
                         "python_version": "PYTHON3_10"})
-# MANDATORY: Build before job execution
+# Optional: Build before job execution (or run directly with run_dh_python_job)
 run_dh_python_build(project_name="my-project", name="my-fn", wait=True)
 run_dh_python_job(project_name="my-project", name="my-fn",
                   inputs={"data": "<dataitem-key>"},
@@ -343,7 +343,7 @@ get_dh_run_output(project="my-project", run_id="<id>", output_name="result")
 
 ## 9. Operational Guidance for the Agent
 
-- **Always Build Before Job / Serve Execution**: For Python runtimes on the platform, **always run the build action before executing job or serve**. The build step compiles dependencies and mounts the handler into the image.
+- **Direct Execution Supported (Build is Optional)**: For Python runtimes on the platform, jobs can be executed directly with `run_dh_python_job` without building first. Executing a build action (`run_dh_python_build`) is optional and only necessary if you need to pre-build dependencies into a custom image.
 - **Run Failure Self-Correction Protocol**: If a build or job run enters an `ERROR` or `FAILED` state:
   1. Fetch logs with `get_dh_run_logs(project, run_id)`.
   2. Diagnose the root cause from the error traceback.

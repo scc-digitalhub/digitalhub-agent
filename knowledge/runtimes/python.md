@@ -507,7 +507,7 @@ def train(project, run, di):
 
 ## 9. Operational Guidance for the Agent
 
-- **Always Build Before Job / Serve Execution**: For Python runtimes, it is **necessary to execute a build action** (`run_dh_python_build` or `build_dh_function`) before executing a `job` or `serve` action. The build step validates syntax, installs pip `requirements`, and registers the container image. Never attempt to run a job without building first.
+- **Direct Execution Supported (Build is Optional)**: For Python runtimes, jobs can be executed directly using `run_dh_python_job` without a prior build step. The build action (`run_dh_python_build` or `build_dh_function`) is optional and only necessary if you explicitly want to pre-build a container image with pip `requirements` or custom instructions.
 - **Troubleshooting & Automated Error Recovery Protocol**:
   Whenever a build run or job run fails or enters an `ERROR`/`FAILED` state:
   1. **Fetch Logs Immediately**: Call `get_dh_run_logs(project="<project>", run_id="<failed-run-id>")` to inspect stdout/stderr and tracebacks.
